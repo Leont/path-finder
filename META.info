@@ -1,0 +1,11 @@
+{
+    "name" : "YAMLish",
+    "version" : "0.0.1",
+    "description" : "An implementation of a useful subset of YAML",
+    "provides" : {
+        "Path::Iterator"       : "lib/Path/Iterator.pm6",
+    },
+    "author" : "Leon Timmermans",
+    "depends" : [ ],
+    "source-url" : "git://github.com/leont/path-iterator.git"
+}
