@@ -6,10 +6,10 @@ class Path::Iterator {
 		return $rule;
 	}
 	my multi rulify(Path::Iterator:D $rule) {
-		return $rule.rules;
+		return |$rule.rules;
 	}
 	method and(Path::Iterator:D $self: *@also) {
-		return self.bless(:rules(@!rules, @also.map(&rulify)));
+		return self.bless(:rules(|@!rules, |@also.map(&rulify)));
 	}
 	method not(*@no) {
 		my $obj = self.new.and(|@no);
@@ -31,14 +31,14 @@ class Path::Iterator {
 		return $iterator;
 	}
 	method or(*@also) {
-		my @iterators = self, @also.map(&unrulify);
-		my $rule = sub ($item) {
+		my @iterators = self, |@also.map(&unrulify);
+		my @rules = sub ($item) {
 			for @iterators -> $iterator {
 				return True if $iterator.test($item);
 			}
 			return False;
 		}
-		return self.bless(:rules[$rule]);
+		return self.bless(:@rules);
 	}
 	method skip(*@garbage) {
 		my $obj = self.new.or(|@garbage);
