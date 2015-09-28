@@ -57,9 +57,9 @@ class Path::Iterator {
 		});
 	}
 
-	method test($item) {
+	method test($item, *%args) {
 		for @!rules -> &rule {
-			return False if not rule($item);
+			return False if not rule($item, |%args);
 		}
 		return True;
 	}
@@ -98,8 +98,7 @@ class Path::Iterator {
 		self.and: sub ($item) { $item.f && $item.s ~~ $size };
 	}
 	method depth (Range $depth-range) {
-		self.and: sub ($item) {
-			my $depth = ...;
+		self.and: sub ($item, :$depth) {
 			return do given $depth {
 				when $depth-range.max {
 					Prune-exclusive;
