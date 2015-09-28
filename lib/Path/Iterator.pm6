@@ -158,31 +158,46 @@ class Path::Iterator {
 	method !is-unique(IO::Path $item, *%opts) {
 		return True; # XXX
 	}
-	method iter(*@dirs, Bool :$follow-symlinks = True, Bool :$depthfirst = False, Bool :$sorted = True, Bool :$loop-safe = True, Bool :$relative = False, :&visitor?, :&error-handler = sub ($item, $reason) { die sprintf "%s: %s\n", $item, $reason }) {
+	method iter(*@dirs,
+		Bool :$follow-symlinks = True,
+		Bool :$depth-first = False,
+		Bool :$sorted = True,
+		Bool :$loop-safe = True,
+		Bool :$relative = False,
+		:&visitor?,
+		:&error-handler = sub ($item, $reason) { die sprintf "%s: %s\n", $item, $reason }
+	) {
 		@dirs = '.' if not @dirs;
 		my @queue = @dirs.map: -> $filename {
 			my $path = $filename.IO;
-			[ $path, 0, $path ];
+			($path, 0, $path, Bool);
 		};
 
 		gather {
 			while @queue.elems {
-				my ($item, $depth, $origin) = @( @queue.shift );
+				my ($item, $depth, $origin, $result) = @( @queue.shift );
 
-				redo if not $follow-symlinks and $item.l;
+				without ($result) {
+					next if not $follow-symlinks and $item.l;
 
-				my $result = @!rules ?? self.test($item) !! True;
+					$result = @!rules ?? self.test($item, :$depth, :$origin) !! True;
 
-				if &visitor && $result {
-					visitor($item);
-				}
+					if &visitor && $result {
+						visitor($item);
+					}
 
-				if $item.d && $result !~~ Prune && (!$loop-safe || self!is-unique($item)) {
-					my $depth-p1 = $depth + 1;
-					my @next = $item.dir(test => none('.', '..')).map: -> $child { [ $child, $depth + 1, $origin ] };
-					@next .= sort if $sorted;
-					# depthfirst
-					@queue.push: @next;
+					if $item.d && $result !~~ Prune && (!$loop-safe || self!is-unique($item)) {
+						my @next = $item.dir(test => none('.', '..')).map: -> $child { ($child, $depth + 1, $origin, Bool) };
+						@next .= sort if $sorted;
+						if ($depth-first) {
+							@next.push: $($item, $depth, $origin, $result);
+							@queue.unshift: @next;
+							next;
+						}
+						else {
+							@queue.push: @next;
+						}
+					}
 				}
 
 				take $relative ?? $item.relative($origin) !! $item if $result;
