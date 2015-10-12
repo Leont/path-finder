@@ -8,12 +8,22 @@ class Path::Iterator {
 	my multi rulify(Path::Iterator:D $rule) {
 		return |$rule.rules;
 	}
-	method and(Path::Iterator:D $self: *@also) {
+	multi method and(Path::Iterator:D $self: *@also) {
 		return self.bless(:rules(|@!rules, |@also.map(&rulify)));
 	}
-	method not(*@no) {
-		my $obj = self.new.and(|@no);
-		return self.and(sub ($item) {
+	multi method and(Path::Iterator:U: *@also) {
+		return self.bless(:rules(|@also.map(&rulify)));
+	}
+	multi method none(Path::Iterator:U: Path::Iterator:D $obj) {
+		return $obj.not;
+	}
+	multi method none(Path::Iterator:U: *@no) {
+		my $obj = self.bless(:rules(|@no.map(&rulify)));
+		return $obj.not;
+	}
+	method not() {
+		my $obj = self;
+		return self.bless(:rules[sub ($item) {
 			given $obj.test($item) -> $original {
 				when Prune {
 					return Prune(+!$original);
@@ -22,7 +32,7 @@ class Path::Iterator {
 					return !$original;
 				}
 			}
-		});
+		}]);
 	}
 	my multi unrulify(Callable $rule) {
 		return Path::Iterator.new(:rules[$rule]);
