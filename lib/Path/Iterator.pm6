@@ -201,11 +201,11 @@ class Path::Iterator {
 						@next .= sort if $sorted;
 						if ($depth-first) {
 							@next.push: $($item, $depth, $origin, $result);
-							@queue.unshift: @next;
+							@queue.unshift: |@next;
 							next;
 						}
 						else {
-							@queue.push: @next;
+							@queue.push: |@next;
 						}
 					}
 				}
