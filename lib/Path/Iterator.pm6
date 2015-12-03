@@ -75,35 +75,35 @@ class Path::Iterator {
 	}
 
 	method name($name) {
-		self.and: sub ($item) { $item.basename ~~ $name };
+		self.and: sub ($item, *%) { $item.basename ~~ $name };
 	}
 	method dangling() {
 		self.and: sub ($item) { $item.l && !$item.e };
 	}
 
-	BEGIN {
-		my $package = $?CLASS;
-		my %X-tests = %(
-			:r('readable'),    :R('r_readable'),
-			:w('writable'),    :W('r_writable'),
-			:x('executable'),  :X('r_executable'),
-			:o('owned'),       :O('r_owned'),
+	my $package = $?CLASS;
+	my %X-tests = %(
+		:r('readable'),    :R('r_readable'),
+		:w('writable'),    :W('r_writable'),
+		:x('executable'),  :X('r_executable'),
+		:o('owned'),       :O('r_owned'),
 
-			:e('exists'),      :f('file'),
-			:z('empty'),       :d('directory'),
-			:s('nonempty'),    :l('symlink'),
+		:e('exists'),      :f('file'),
+		:z('empty'),       :d('directory'),
+		:s('nonempty'),    :l('symlink'),
 
-			:u('setuid'),      :S('socket'),
-			:g('setgid'),      :b('block'),
-			:k('sticky'),      :c('character'),
-			:p('fifo'),        :t('tty'),
-		);
-		for %X-tests.kv -> $test, $method {
-			my $rule = sub ($item) { ?$item."$test"() };
-			$package.HOW.add_method: $package, $method, method () { return self.and($rule); };
-			$package.HOW.add_method: $package, "not-$method", method () { return self.not($rule) };
-		}
+		:u('setuid'),      :S('socket'),
+		:g('setgid'),      :b('block'),
+		:k('sticky'),      :c('character'),
+		:p('fifo'),        :t('tty'),
+	);
+	for %X-tests.kv -> $test, $method {
+		my $rule = sub ($item, *%) { ?$item."$test"() };
+		$?CLASS.^add_method: $method, anon method () { return self.and($rule); };
+		$?CLASS.^add_method: "not-$method", anon method () { return self.not($rule) };
 	}
+	$?CLASS.^compose;
+
 	method size ($size) {
 		self.and: sub ($item) { $item.f && $item.s ~~ $size };
 	}
