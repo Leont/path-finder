@@ -80,7 +80,7 @@ method name($name) {
 	self.and: sub ($item, *%) { $item.basename ~~ $name };
 }
 method dangling() {
-	self.and: sub ($item) { $item.l && !$item.e };
+	self.and: sub ($item, *%) { $item.l && !$item.e };
 }
 
 my $package = $?CLASS;
@@ -107,10 +107,10 @@ for %X-tests.kv -> $test, $method {
 $?CLASS.^compose;
 
 method size ($size) {
-	self.and: sub ($item) { $item.f && $item.s ~~ $size };
+	self.and: sub ($item, *%) { $item.f && $item.s ~~ $size };
 }
 method depth (Range $depth-range) {
-	self.and: sub ($item, :$depth) {
+	self.and: sub ($item, :$depth, *%) {
 		return do given $depth {
 			when $depth-range.max {
 				Prune-exclusive;
@@ -128,7 +128,7 @@ method depth (Range $depth-range) {
 	};
 }
 method skip-dirs(*@patterns) {
-	self.and: sub ($item) {
+	self.and: sub ($item, *%) {
 		if $item.d && $item ~~ any(@patterns) {
 			return Prune(False);
 		}
@@ -136,7 +136,7 @@ method skip-dirs(*@patterns) {
 	}
 }
 method skip-subdirs(*@patterns) {
-	self.and: sub ($item) {
+	self.and: sub ($item, *%) {
 		if $item.d && $item.Str ne $item.basename && $item ~~ any(@patterns) {
 			return Prune(False);
 		}
@@ -144,21 +144,21 @@ method skip-subdirs(*@patterns) {
 	}
 }
 method shebang($pattern) {
-	self.and: sub ($item) {
+	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		my $first = $item.lines[0];
 		return $first ~~ $pattern;
 	}
 }
 method contents($pattern) {
-	self.and: sub ($item) {
+	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		my $content = $item.slurp;
 		return $content ~~ $pattern;
 	}
 }
 method line-match($pattern) {
-	self.and: sub ($item) {
+	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		for $item.lines -> $line {
 			return True if $line ~~ $pattern;
