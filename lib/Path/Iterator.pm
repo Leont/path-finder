@@ -16,11 +16,8 @@ multi method and(Path::Iterator:D $self: *@also) {
 multi method and(Path::Iterator:U: *@also) {
 	return self.bless(:rules(|@also.map(&rulify)));
 }
-multi method none(Path::Iterator:U: Path::Iterator:D $obj) {
-	return $obj.not;
-}
-multi method none(Path::Iterator:U: *@no) {
-	return self.or(|@no.map(&rulify))).not;
+method none(Path::Iterator:U: *@no) {
+	return self.or(|@no).not;
 }
 method not() {
 	my $obj = self;
@@ -41,7 +38,10 @@ my multi unrulify(Callable $rule) {
 my multi unrulify(Path::Iterator:D $iterator) {
 	return $iterator;
 }
-method or(Path::Iterator:U: *@also) {
+multi method or(Path::Iterator:U: $rule) {
+	return unrulify($rule);
+}
+multi method or(Path::Iterator:U: *@also) {
 	my @iterators = |@also.map(&unrulify);
 	my @rules = sub ($item) {
 		my $prune-inclusive = 0;
