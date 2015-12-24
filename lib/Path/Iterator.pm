@@ -113,10 +113,10 @@ for %X-tests.kv -> $test, $method {
 }
 $?CLASS.^compose;
 
-method size ($size) {
+method size($size) {
 	self.and: sub ($item, *%) { $item.f && $item.s ~~ $size };
 }
-method depth (Range $depth-range) {
+multi method depth(Range $depth-range) {
 	self.and: sub ($item, :$depth, *%) {
 		return do given $depth {
 			when $depth-range.max {
@@ -134,34 +134,36 @@ method depth (Range $depth-range) {
 		}
 	};
 }
-method skip-dirs(*@patterns) {
+multi method depth(Int $depth) {
+	return self.depth($depth..$depth);
+}
+
+method skip-dir($pattern) {
 	self.and: sub ($item, *%) {
-		if $item.d && $item ~~ any(@patterns) {
+		if $item.d && $item ~~ $pattern {
 			return Prune-Inclusive;
 		}
 		return True;
 	}
 }
-method skip-subdirs(*@patterns) {
+method skip-subdirs($pattern) {
 	self.and: sub ($item, *%) {
-		if $item.d && $item.Str ne $item.basename && $item ~~ any(@patterns) {
+		if $item.d && $item ne $item.basename && $item ~~ $pattern {
 			return Prune-Inclusive;
 		}
 		return True;
 	}
 }
-method shebang($pattern) {
+method shebang($pattern = rx/ ^ '#!' /) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
-		my $first = $item.lines[0];
-		return $first ~~ $pattern;
+		return $item.lines[0] ~~ $pattern;
 	}
 }
 method contents($pattern) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
-		my $content = $item.slurp;
-		return $content ~~ $pattern;
+		return $item.slurp ~~ $pattern;
 	}
 }
 method line-match($pattern) {
