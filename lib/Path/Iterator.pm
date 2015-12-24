@@ -21,7 +21,7 @@ method none(Path::Iterator:U: *@no) {
 }
 method not() {
 	my $obj = self;
-	return self.bless(:rules[sub ($item) {
+	return self.bless(:rules[sub ($item, *%) {
 		given $obj.test($item) -> $original {
 			when Prune {
 				return Prune(+!$original);
@@ -43,7 +43,7 @@ multi method or(Path::Iterator:U: $rule) {
 }
 multi method or(Path::Iterator:U: *@also) {
 	my @iterators = |@also.map(&unrulify);
-	my @rules = sub ($item) {
+	my @rules = sub ($item, *%) {
 		my $prune-inclusive = 0;
 		for @iterators -> $iterator {
 			given $iterator.test($item) {
@@ -61,8 +61,8 @@ multi method or(Path::Iterator:U: *@also) {
 }
 method skip(*@garbage) {
 	my $obj = self.new.or(|@garbage);
-	self.and(sub ($item, $base) {
-		given $obj.test($item, $base) {
+	self.and(sub ($item, *%) {
+		given $obj.test($item) {
 			when Prune {
 				return Prune-Inclusive;
 			}
