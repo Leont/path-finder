@@ -20,8 +20,7 @@ multi method none(Path::Iterator:U: Path::Iterator:D $obj) {
 	return $obj.not;
 }
 multi method none(Path::Iterator:U: *@no) {
-	my $obj = self.bless(:rules(|@no.map(&rulify)));
-	return $obj.not;
+	return self.or(|@no.map(&rulify))).not;
 }
 method not() {
 	my $obj = self;
@@ -42,13 +41,21 @@ my multi unrulify(Callable $rule) {
 my multi unrulify(Path::Iterator:D $iterator) {
 	return $iterator;
 }
-method or(*@also) {
-	my @iterators = self, |@also.map(&unrulify);
+method or(Path::Iterator:U: *@also) {
+	my @iterators = |@also.map(&unrulify);
 	my @rules = sub ($item) {
+		my $prune-inclusive = 0;
 		for @iterators -> $iterator {
-			return True if $iterator.test($item);
+			given $iterator.test($item) {
+				when Prune-Inclusive {
+					$prune-inclusive++;
+				}
+				when * === True {
+					return True;
+				}
+			}
 		}
-		return False;
+		return $prune-inclusive ?? Prune-Inclusive !! False;
 	}
 	return self.bless(:@rules);
 }
@@ -57,12 +64,12 @@ method skip(*@garbage) {
 	self.and(sub ($item, $base) {
 		given $obj.test($item, $base) {
 			when Prune {
+				return Prune-Inclusive;
+			}
+			when * === True {
 				return Prune-inclusive;
 			}
-			when True {
-				return Prune-inclusive;
-			}
-			when False {
+			default {
 				return True;
 			}
 		}
