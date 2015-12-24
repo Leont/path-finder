@@ -140,20 +140,33 @@ multi method depth(Int $depth) {
 
 method skip-dir($pattern) {
 	self.and: sub ($item, *%) {
-		if $item.d && $item ~~ $pattern {
+		if $item.d && $item.basename ~~ $pattern {
 			return Prune-Inclusive;
 		}
 		return True;
 	}
 }
 method skip-subdirs($pattern) {
-	self.and: sub ($item, *%) {
-		if $item.d && $item ne $item.basename && $item ~~ $pattern {
+	self.and: sub ($item, :$depth, *%) {
+		if $item.d && $depth > 0 && $item.basename ~~ $pattern {
 			return Prune-Inclusive;
 		}
 		return True;
 	}
 }
+method skip-hidden() {
+	self.and: sub ($item, :$depth, *%) {
+		if $depth > 0 && $item.basename ~~ rx/ ^ '.' / {
+			return $item.d ?? Prune-Inclusive !! False;
+		}
+		return True;
+	}
+}
+my @svn = $*DISTRO.name eq 'mswin32' ?? '_svn' !! ();
+method skip-vcs() {
+	return self.skip-dir(any(<.git .bzr .hg _darcs CVS RCS .svn>, |@svn)).name(none(rx/ '.#' $ /, rx/ ',v' $ /));
+}
+
 method shebang($pattern = rx/ ^ '#!' /) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
