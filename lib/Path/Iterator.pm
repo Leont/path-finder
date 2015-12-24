@@ -2,7 +2,7 @@ use v6;
 
 unit class Path::Iterator;
 has @.rules;
-enum Prune <Prune-inclusive Prune-exclusive>;
+enum Prune <Prune-Inclusive Prune-Exclusive>;
 
 my multi rulify(Callable $rule) {
 	return $rule;
@@ -67,7 +67,7 @@ method skip(*@garbage) {
 				return Prune-Inclusive;
 			}
 			when * === True {
-				return Prune-inclusive;
+				return Prune-Inclusive;
 			}
 			default {
 				return True;
@@ -120,7 +120,7 @@ method depth (Range $depth-range) {
 	self.and: sub ($item, :$depth, *%) {
 		return do given $depth {
 			when $depth-range.max {
-				Prune-exclusive;
+				Prune-Exclusive;
 			}
 			when $depth-range {
 				True;
@@ -129,7 +129,7 @@ method depth (Range $depth-range) {
 				False;
 			}
 			default {
-				Prune-inclusive;
+				Prune-Inclusive;
 			}
 		}
 	};
@@ -137,7 +137,7 @@ method depth (Range $depth-range) {
 method skip-dirs(*@patterns) {
 	self.and: sub ($item, *%) {
 		if $item.d && $item ~~ any(@patterns) {
-			return Prune(False);
+			return Prune-Inclusive;
 		}
 		return True;
 	}
@@ -145,7 +145,7 @@ method skip-dirs(*@patterns) {
 method skip-subdirs(*@patterns) {
 	self.and: sub ($item, *%) {
 		if $item.d && $item.Str ne $item.basename && $item ~~ any(@patterns) {
-			return Prune(False);
+			return Prune-Inclusive;
 		}
 		return True;
 	}
