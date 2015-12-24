@@ -177,7 +177,7 @@ method line-match($pattern) {
 method !is-unique(IO::Path $item, *%opts) {
 	return True; # XXX
 }
-method iter(*@dirs,
+method in(*@dirs,
 	Bool :$follow-symlinks = True,
 	Bool :$depth-first = False,
 	Bool :$sorted = True,
