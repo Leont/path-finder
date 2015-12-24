@@ -92,10 +92,10 @@ method dangling() {
 
 my $package = $?CLASS;
 my %X-tests = %(
-	:r('readable'),    :R('r_readable'),
-	:w('writable'),    :W('r_writable'),
-	:x('executable'),  :X('r_executable'),
-	:o('owned'),       :O('r_owned'),
+	:r('readable'),    :R('r-readable'),
+	:w('writable'),    :W('r-writable'),
+	:x('executable'),  :X('r-executable'),
+	:o('owned'),       :O('r-owned'),
 
 	:e('exists'),      :f('file'),
 	:z('empty'),       :d('directory'),
