@@ -109,7 +109,7 @@ my %X-tests = %(
 for %X-tests.kv -> $test, $method {
 	my $rule = sub ($item, *%) { ?$item."$test"() };
 	$?CLASS.^add_method: $method, anon method () { return self.and($rule); };
-	$?CLASS.^add_method: "not-$method", anon method () { return self.not($rule) };
+	$?CLASS.^add_method: "not-$method", anon method () { return self.none($rule) };
 }
 $?CLASS.^compose;
 
