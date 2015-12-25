@@ -224,12 +224,12 @@ method in(*@dirs,
 					my @next = $item.dir.map: -> $child { ($child, $depth + 1, $origin, Bool) };
 					@next .= sort if $sorted;
 					if ($depth-first) {
-						@next.push: $($item, $depth, $origin, $result);
-						@queue.unshift: |@next;
+						@next.push: ($item, $depth, $origin, $result);
+						@queue.prepend: @next;
 						next;
 					}
 					else {
-						@queue.push: |@next;
+						@queue.append: @next;
 					}
 				}
 			}
