@@ -140,7 +140,7 @@ multi method depth(Int $depth) {
 
 method skip-dir($pattern) {
 	self.and: sub ($item, *%) {
-		if $item.d && $item.basename ~~ $pattern {
+		if $item.basename ~~ $pattern && $item.d {
 			return Prune-Inclusive;
 		}
 		return True;
@@ -148,7 +148,7 @@ method skip-dir($pattern) {
 }
 method skip-subdirs($pattern) {
 	self.and: sub ($item, :$depth, *%) {
-		if $item.d && $depth > 0 && $item.basename ~~ $pattern {
+		if $depth > 0 && $item.basename ~~ $pattern && $item.d {
 			return Prune-Inclusive;
 		}
 		return True;
@@ -157,7 +157,7 @@ method skip-subdirs($pattern) {
 method skip-hidden() {
 	self.and: sub ($item, :$depth, *%) {
 		if $depth > 0 && $item.basename ~~ rx/ ^ '.' / {
-			return $item.d ?? Prune-Inclusive !! False;
+			return Prune-Inclusive;
 		}
 		return True;
 	}
@@ -220,7 +220,7 @@ method in(*@dirs,
 					visitor($item);
 				}
 
-				if $item.d && $result !~~ Prune && (!$loop-safe || self!is-unique($item)) {
+				if $result !~~ Prune && $item.d && (!$loop-safe || self!is-unique($item)) {
 					my @next = $item.dir.map: -> $child { ($child, $depth + 1, $origin, Bool) };
 					@next .= sort if $sorted;
 					if ($depth-first) {
