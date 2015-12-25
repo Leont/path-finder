@@ -195,9 +195,17 @@ method line-match($pattern, *%opts) {
 	}
 }
 
-method !is-unique(IO::Path $item, *%opts) {
-	return True; # XXX
-}
+my &is-unique = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>)
+	?? sub (Bool %seen, IO::Path $item) {
+		use nqp;
+		my $inode = nqp::p6box_i(nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_INODE));
+		my $device = nqp::p6box_i(nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_DEV));
+		my $key = "$inode\-$device";
+		return False if %seen{$key};
+		return %seen{$key} = True;
+	}
+	!! sub (Bool %seen, IO::Path $item) { return True };
+
 method in(*@dirs,
 	Bool :$follow-symlinks = True,
 	Bool :$depth-first = False,
@@ -213,6 +221,7 @@ method in(*@dirs,
 	};
 
 	gather {
+		my Bool %seen;
 		while @queue.elems {
 			my ($item, $depth, $origin, $result) = @( @queue.shift );
 
@@ -225,7 +234,7 @@ method in(*@dirs,
 					visitor($item);
 				}
 
-				if $result !~~ Prune && $item.d && (!$loop-safe || self!is-unique($item)) {
+				if $result !~~ Prune && $item.d && (!$loop-safe || is-unique(%seen, $item)) {
 					my @next = $item.dir.map: -> $child { ($child, $depth + 1, $origin, Bool) };
 					@next .= sort if $sorted;
 					if ($depth-first) {
