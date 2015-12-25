@@ -47,14 +47,14 @@ multi method or(Path::Iterator:U: *@also) {
 		my $ret = False;
 		for @iterators -> $iterator {
 			given $iterator.test($item, |%opts) {
+				when * === True {
+					return True;
+				}
 				when Prune-Exclusive {
 					$ret = $_;
 				}
 				when Prune-Inclusive {
 					$ret = $_ if $ret === False;
-				}
-				when * === True {
-					return True;
 				}
 			}
 		}
@@ -63,20 +63,15 @@ multi method or(Path::Iterator:U: *@also) {
 	return self.bless(:@rules);
 }
 method skip(*@garbage) {
-	my $obj = self.or(|@garbage);
-	self.and(sub ($item, *%opts) {
-		given $obj.test($item, |%opts) {
-			when Prune {
+	my @iterators = |@garbage.map(&unrulify);
+	self.and: sub ($item, *%opts) {
+		for @iterators -> $iterator {
+			if $iterator.test($item, |%opts) !== False {
 				return Prune-Inclusive;
-			}
-			when * === True {
-				return Prune-Inclusive;
-			}
-			default {
-				return True;
 			}
 		}
-	});
+		return True;
+	};
 }
 
 method test($item, *%args) {
