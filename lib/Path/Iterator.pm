@@ -173,22 +173,22 @@ method skip-vcs() {
 	return self.skip-dir(any(<.git .bzr .hg _darcs CVS RCS .svn>, |@svn)).name(none(rx/ '.#' $ /, rx/ ',v' $ /));
 }
 
-method shebang($pattern = rx/ ^ '#!' /) {
+method shebang($pattern = rx/ ^ '#!' /, *%opts) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
-		return $item.lines[0] ~~ $pattern;
+		return $item.lines(|%opts)[0] ~~ $pattern;
 	}
 }
-method contents($pattern) {
+method contents($pattern, *%opts) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
-		return $item.slurp ~~ $pattern;
+		return $item.slurp(|%opts) ~~ $pattern;
 	}
 }
-method line-match($pattern) {
+method line-match($pattern, *%opts) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
-		for $item.lines -> $line {
+		for $item.lines(|%opts) -> $line {
 			return True if $line ~~ $pattern;
 		}
 		return False;
