@@ -44,18 +44,21 @@ multi method or(Path::Iterator:U: $rule) {
 multi method or(Path::Iterator:U: *@also) {
 	my @iterators = |@also.map(&unrulify);
 	my @rules = sub ($item, *%) {
-		my $prune-inclusive = 0;
+		my $ret = False;
 		for @iterators -> $iterator {
 			given $iterator.test($item) {
+				when Prune-Exclusive {
+					$ret = $_;
+				}
 				when Prune-Inclusive {
-					$prune-inclusive++;
+					$ret = $_ if $ret === False;
 				}
 				when * === True {
 					return True;
 				}
 			}
 		}
-		return $prune-inclusive ?? Prune-Inclusive !! False;
+		return $ret;
 	}
 	return self.bless(:@rules);
 }
