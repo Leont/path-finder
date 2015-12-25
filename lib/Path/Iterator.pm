@@ -219,7 +219,7 @@ method in(*@dirs,
 			without ($result) {
 				next if not $follow-symlinks and $item.l;
 
-				$result = @!rules ?? self.test($item, :$depth, :$origin) !! True;
+				$result = self.test($item, :$depth, :$origin);
 
 				if &visitor && $result {
 					visitor($item);
