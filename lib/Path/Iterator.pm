@@ -87,7 +87,10 @@ method name($name) {
 	self.and: sub ($item, *%) { $item.basename ~~ $name };
 }
 method dangling() {
-	self.and: sub ($item, *%) { $item.l && !$item.e };
+	self.and: sub ($item, *%) { $item.l and not $item.e };
+}
+method not-dangling() {
+	self.and: sub ($item, *%) { not $item.l or $item.e };
 }
 
 my $package = $?CLASS;
