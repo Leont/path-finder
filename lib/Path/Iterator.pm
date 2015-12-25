@@ -121,7 +121,7 @@ for %X-tests.kv -> $test, $method {
 }
 $?CLASS.^compose;
 
-method size($size) {
+method size(Mu $size) {
 	self.and: sub ($item, *%) { $item.f && $item.s ~~ $size };
 }
 multi method depth(Range $depth-range) {
@@ -145,8 +145,13 @@ multi method depth(Range $depth-range) {
 multi method depth(Int $depth) {
 	return self.depth($depth..$depth);
 }
+multi method depth(Mu $depth-match) {
+	self.and: sub ($item, :$depth, *%) {
+		return $depth ~~ $depth-match;
+	}
+}
 
-method skip-dir($pattern) {
+method skip-dir(Mu $pattern) {
 	self.and: sub ($item, *%) {
 		if $item.basename ~~ $pattern && $item.d {
 			return Prune-Inclusive;
@@ -154,7 +159,7 @@ method skip-dir($pattern) {
 		return True;
 	}
 }
-method skip-subdirs($pattern) {
+method skip-subdirs(Mu $pattern) {
 	self.and: sub ($item, :$depth, *%) {
 		if $depth > 0 && $item.basename ~~ $pattern && $item.d {
 			return Prune-Inclusive;
@@ -175,19 +180,19 @@ method skip-vcs() {
 	return self.skip-dir(any(<.git .bzr .hg _darcs CVS RCS .svn>, |@svn)).name(none(rx/ '.#' $ /, rx/ ',v' $ /));
 }
 
-method shebang($pattern = rx/ ^ '#!' /, *%opts) {
+method shebang(Mu $pattern = rx/ ^ '#!' /, *%opts) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		return $item.lines(|%opts)[0] ~~ $pattern;
 	}
 }
-method contents($pattern, *%opts) {
+method contents(Mu $pattern, *%opts) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		return $item.slurp(|%opts) ~~ $pattern;
 	}
 }
-method line-match($pattern, *%opts) {
+method line-match(Mu $pattern, *%opts) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		for $item.lines(|%opts) -> $line {
