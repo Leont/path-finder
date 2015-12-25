@@ -81,12 +81,14 @@ method skip(*@garbage) {
 
 method test($item, *%args) {
 	for @!rules -> &rule {
-		return False if not rule($item, |%args);
+		unless rule($item, |%args) -> $value {
+			return $value;
+		}
 	}
 	return True;
 }
 
-method name($name) {
+method name(Mu $name) {
 	self.and: sub ($item, *%) { $item.basename ~~ $name };
 }
 method dangling() {
