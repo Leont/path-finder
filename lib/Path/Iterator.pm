@@ -21,8 +21,8 @@ method none(Path::Iterator:U: *@no) {
 }
 method not() {
 	my $obj = self;
-	return self.bless(:rules[sub ($item, *%) {
-		given $obj.test($item) -> $original {
+	return self.bless(:rules[sub ($item, *%opts) {
+		given $obj.test($item, |%opts) -> $original {
 			when Prune {
 				return Prune(+!$original);
 			}
@@ -33,7 +33,7 @@ method not() {
 	}]);
 }
 my multi unrulify(Callable $rule) {
-	return Path::Iterator.new(:rules[$rule]);
+	return Path::Iterator.bless(:rules[$rule]);
 }
 my multi unrulify(Path::Iterator:D $iterator) {
 	return $iterator;
@@ -43,10 +43,10 @@ multi method or(Path::Iterator:U: $rule) {
 }
 multi method or(Path::Iterator:U: *@also) {
 	my @iterators = |@also.map(&unrulify);
-	my @rules = sub ($item, *%) {
+	my @rules = sub ($item, *%opts) {
 		my $ret = False;
 		for @iterators -> $iterator {
-			given $iterator.test($item) {
+			given $iterator.test($item, |%opts) {
 				when Prune-Exclusive {
 					$ret = $_;
 				}
@@ -63,9 +63,9 @@ multi method or(Path::Iterator:U: *@also) {
 	return self.bless(:@rules);
 }
 method skip(*@garbage) {
-	my $obj = self.new.or(|@garbage);
-	self.and(sub ($item, *%) {
-		given $obj.test($item) {
+	my $obj = self.or(|@garbage);
+	self.and(sub ($item, *%opts) {
+		given $obj.test($item, |%opts) {
 			when Prune {
 				return Prune-Inclusive;
 			}
