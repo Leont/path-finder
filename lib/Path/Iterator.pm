@@ -202,7 +202,6 @@ method in(*@dirs,
 	Bool :$loop-safe = True,
 	Bool :$relative = False,
 	:&visitor?,
-	:&error-handler = sub ($item, $reason) { die sprintf "%s: %s\n", $item, $reason }
 ) {
 	@dirs = '.' if not @dirs;
 	my @queue = @dirs.map: -> $filename {
