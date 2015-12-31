@@ -4,6 +4,47 @@ unit class Path::Iterator;
 has @.rules;
 enum Prune <Prune-Inclusive Prune-Exclusive>;
 
+my %priority = (
+	0 => <depth skip-hidden>,
+	1 => <skip skip-dir skip-subdir skip-vcs>,
+	2 => <name ext>
+).flatmap( -> $pair { ($_ => $pair.key for @($pair.value)) });
+
+our sub finder(*%options) is export(:find) {
+	my @keys = %options.keys.sort({ %priority{$_} // 3 });
+	return (Path::Iterator, |@keys).reduce: -> $current, $key {
+		my $value = %options{$key};
+		my $capture = do given $key {
+			when any(<skip-dir skip-subdir depth name ext size>) {
+				\($value);
+			}
+			when any(<and or none skip>) {
+				\(|@($value));
+			}
+			when 'shebang' {
+				my ($regex, %options) = @($value);
+				$regex ?? \(|$regex, |%options) !! \();
+			}
+			when any(<contents line-match>) {
+				my ($regex, %options) = @($value);
+				\($regex, |%options);
+			}
+			default {
+				\();
+			}
+		}
+		$current."$key"(|$capture);
+	}
+}
+
+my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Sub);
+our sub find(*@args, Any:U :$as = IO::Path, :&map = %as{$as}, *%options) is export(:DEFAULT :find) {
+	my %in-options = %options<follow-symlinks depth-first sorted loop-safe relative visitor>:delete:p;
+	my $finder = finder(|%options);
+	my $seq = $finder.in(|@args, |%in-options);
+	return &map ?? $seq.map(&map) !! $seq;
+}
+
 my multi rulify(Callable $rule) {
 	return $rule;
 }
