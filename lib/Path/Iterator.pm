@@ -2,7 +2,7 @@ use v6;
 
 unit class Path::Iterator;
 has @.rules;
-enum Prune <Prune-Inclusive Prune-Exclusive>;
+our enum Prune is export(:prune) <Prune-Inclusive Prune-Exclusive>;
 
 my %priority = (
 	0 => <depth skip-hidden>,
@@ -154,7 +154,7 @@ my %X-tests = %(
 	:p('fifo'),        :t('tty'),
 );
 for %X-tests.kv -> $test, $method {
-	$?CLASS.^add_method: $method, anon method () { return self.and: sub ($item, *%) { ?$item."$test"() } };
+	$?CLASS.^add_method: $method,       anon method () { return self.and: sub ($item, *%) { ?$item."$test"() } };
 	$?CLASS.^add_method: "not-$method", anon method () { return self.and: sub ($item, *%) { !$item."$test"() } };
 }
 $?CLASS.^compose;
@@ -213,9 +213,10 @@ method skip-hidden() {
 		return True;
 	}
 }
-my @svn = $*DISTRO.name eq 'mswin32' ?? '_svn' !! ();
+my $vcs-dirs = any(<.git .bzr .hg _darcs CVS RCS .svn>, |($*DISTRO.name eq 'mswin32' ?? '_svn' !! ()));
+my $vcs-files = none(rx/ '.#' $ /, rx/ ',v' $ /);
 method skip-vcs() {
-	return self.skip-dir(any(<.git .bzr .hg _darcs CVS RCS .svn>, |@svn)).name(none(rx/ '.#' $ /, rx/ ',v' $ /));
+	return self.skip-dir($vcs-dirs).name($vcs-files);
 }
 
 method shebang(Mu $pattern = rx/ ^ '#!' /, *%opts) {
@@ -243,8 +244,8 @@ method line-match(Mu $pattern, *%opts) {
 my &is-unique = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>)
 	?? sub (Bool %seen, IO::Path $item) {
 		use nqp;
-		my $inode = nqp::p6box_i(nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_INODE));
-		my $device = nqp::p6box_i(nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_DEV));
+		my $inode = nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_INODE);
+		my $device = nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_DEV);
 		my $key = "$inode\-$device";
 		return False if %seen{$key};
 		return %seen{$key} = True;
