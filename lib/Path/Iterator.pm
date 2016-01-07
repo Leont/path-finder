@@ -294,7 +294,7 @@ method in(*@dirs,
 				}
 			}
 
-			take $relative ?? $item.relative($origin) !! $item if $result;
+			take $relative ?? $item.relative($origin).IO !! $item if $result;
 		}
 	}
 }
