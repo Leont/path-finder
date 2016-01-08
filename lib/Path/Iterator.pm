@@ -7,7 +7,8 @@ our enum Prune is export(:prune) <Prune-Inclusive Prune-Exclusive>;
 my %priority = (
 	0 => <depth skip-hidden>,
 	1 => <skip skip-dir skip-subdir skip-vcs>,
-	2 => <name ext>
+	2 => <name ext>,
+	4 => <content line-match shebang>
 ).flatmap: { ($_ => $^pair.key for @($^pair.value)) };
 
 our sub finder(*%options) is export(:find) {
