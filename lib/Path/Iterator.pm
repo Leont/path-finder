@@ -8,10 +8,10 @@ my %priority = (
 	0 => <depth skip-hidden>,
 	1 => <skip skip-dir skip-subdir skip-vcs>,
 	2 => <name ext>
-).flatmap( -> $pair { ($_ => $pair.key for @($pair.value)) });
+).flatmap: { ($_ => $^pair.key for @($^pair.value)) };
 
 our sub finder(*%options) is export(:find) {
-	my @keys = %options.keys.sort({ %priority{$_} // 3 });
+	my @keys = %options.keys.sort: { %priority{$_} // 3 };
 	return (Path::Iterator, |@keys).reduce: -> $current, $key {
 		my $value = %options{$key};
 		my $capture = do given $key {
@@ -23,7 +23,7 @@ our sub finder(*%options) is export(:find) {
 			}
 			when 'shebang' {
 				my ($regex, %options) = @($value);
-				$regex ?? \(|$regex, |%options) !! \();
+				$regex === True ?? \(|%options) !! \($regex, |%options);
 			}
 			when any(<contents line-match>) {
 				my ($regex, %options) = @($value);
@@ -37,9 +37,9 @@ our sub finder(*%options) is export(:find) {
 	}
 }
 
-our sub find(*@args, *%options) is export(:DEFAULT :find) {
+our sub find(*@dirs, *%options) is export(:DEFAULT :find) {
 	my %in-options = %options<follow-symlinks order sorted loop-safe relative visitor as map>:delete:p;
-	return finder(|%options).in(|@args, |%in-options);
+	return finder(|%options).in(|@dirs, |%in-options);
 }
 
 my multi rulify(Callable $rule) {
@@ -137,7 +137,6 @@ method not-dangling() {
 	self.and: sub ($item, *%) { not $item.l or $item.e };
 }
 
-my $package = $?CLASS;
 my %X-tests = %(
 	:r('readable'),    :R('r-readable'),
 	:w('writable'),    :W('r-writable'),
