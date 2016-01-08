@@ -38,7 +38,7 @@ our sub finder(*%options) is export(:find) {
 }
 
 our sub find(*@args, *%options) is export(:DEFAULT :find) {
-	my %in-options = %options<follow-symlinks depth-first sorted loop-safe relative visitor as map>:delete:p;
+	my %in-options = %options<follow-symlinks order sorted loop-safe relative visitor as map>:delete:p;
 	return finder(|%options).in(|@args, |%in-options);
 }
 
@@ -252,10 +252,12 @@ my &is-unique = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>)
 	}
 	!! sub (Bool %seen, IO::Path $item) { return True };
 
+enum Order is export(:DEFAULT :order) < BreadthFirst PreOrder PostOrder >;
+
 my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Sub);
 method in(*@dirs,
 	Bool :$follow-symlinks = True,
-	Bool :$depth-first = False,
+	Order:D :$order = BreadthFirst,
 	Bool :$sorted = True,
 	Bool :$loop-safe = True,
 	Bool :$relative = False,
@@ -277,13 +279,18 @@ method in(*@dirs,
 			if $result !~~ Prune && $item.d && (!$loop-safe || is-unique(%seen, $item)) && ($follow-symlinks || !$item.l) {
 				my @next = $item.dir.map: { ($^child, $depth + 1, $origin, Bool) };
 				@next .= sort if $sorted;
-				if ($depth-first) {
-					@next.push: ($item, $depth, $origin, $result);
-					@queue.prepend: @next;
-					next;
-				}
-				else {
-					@queue.append: @next;
+				given $order {
+					when BreadthFirst {
+						@queue.append: @next;
+					}
+					when PostOrder {
+						@next.push: ($item, $depth, $origin, $result);
+						@queue.prepend: @next;
+						next;
+					}
+					when PreOrder {
+						@queue.prepend: @next;
+					}
 				}
 			}
 		}
