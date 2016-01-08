@@ -127,8 +127,8 @@ method test($item, *%args) {
 method name(Mu $name) {
 	self.and: sub ($item, *%) { $item.basename ~~ $name };
 }
-method ext(Mu $ext) {
-	self.and: sub ($item, *%) { $item.basename ~~ / \. $ext $ / };
+multi method ext(Mu $ext) {
+	self.and: sub ($item, *%) { $item.extension ~~ $ext };
 }
 method dangling() {
 	self.and: sub ($item, *%) { $item.l and not $item.e };
