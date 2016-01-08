@@ -112,7 +112,7 @@ method skip(*@garbage) {
 	};
 }
 
-method test($item, *%args) {
+method test(IO::Path $item, *%args) {
 	for @!rules -> &rule {
 		unless rule($item, |%args) -> $value {
 			return $value;
@@ -256,14 +256,14 @@ enum Order is export(:DEFAULT :order) < BreadthFirst PreOrder PostOrder >;
 
 my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Sub);
 method in(*@dirs,
-	Bool :$follow-symlinks = True,
+	Bool:D :$follow-symlinks = True,
 	Order:D :$order = BreadthFirst,
-	Bool :$sorted = True,
-	Bool :$loop-safe = True,
-	Bool :$relative = False,
+	Bool:D :$sorted = True,
+	Bool:D :$loop-safe = True,
+	Bool:D :$relative = False,
 	Any:U :$as = IO::Path,
 	:&map = %as{$as},
-	:&visitor?,
+	:&visitor,
 ) {
 	my @queue = (@dirs || '.').map(*.IO).map: { ($^path, 0, $^path, Bool) };
 
