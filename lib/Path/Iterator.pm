@@ -16,7 +16,7 @@ our sub finder(*%options) is export(:find) {
 	return (Path::Iterator, |@keys).reduce: -> $current, $key {
 		my $value = %options{$key};
 		my $capture = do given $key {
-			when any(<skip-dir skip-subdir depth name ext size path>) {
+			when any(<skip-dir skip-subdir depth name ext size path inode device mode nlinks uid gid accessed changed modified>) {
 				\($value);
 			}
 			when any(<and or none skip>) {
@@ -156,6 +156,28 @@ my %X-tests = %(
 for %X-tests.kv -> $test, $method {
 	$?CLASS.^add_method: $method,       anon method () { return self.and: sub ($item, *%) { ?$item."$test"() } };
 	$?CLASS.^add_method: "not-$method", anon method () { return self.and: sub ($item, *%) { !$item."$test"() } };
+}
+
+{
+	use nqp;
+	my %stat-tests = %(
+		inode  => nqp::const::STAT_PLATFORM_INODE,
+		device => nqp::const::STAT_PLATFORM_DEV,
+		mode   => nqp::const::STAT_PLATFORM_MODE,
+		nlinks => nqp::const::STAT_PLATFORM_NLINKS,
+		uid    => nqp::const::STAT_UID,
+		gid    => nqp::const::STAT_GID,
+	);
+	for %stat-tests.kv -> $method, $constant {
+		$?CLASS.^add_method: $method, anon method (Mu $matcher) {
+			self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), $constant) ~~ $matcher }
+		}
+	}
+}
+for <accessed changed modified> -> $time-method {
+	$?CLASS.^add_method: $time-method, anon method (Mu $matcher) {
+		self.and: sub ($item, *%) { $item."$time-method"() ~~ $matcher }
+	}
 }
 $?CLASS.^compose;
 
