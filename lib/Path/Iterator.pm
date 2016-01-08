@@ -37,12 +37,9 @@ our sub finder(*%options) is export(:find) {
 	}
 }
 
-my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Sub);
-our sub find(*@args, Any:U :$as = IO::Path, :&map = %as{$as}, *%options) is export(:DEFAULT :find) {
-	my %in-options = %options<follow-symlinks depth-first sorted loop-safe relative visitor>:delete:p;
-	my $finder = finder(|%options);
-	my $seq = $finder.in(|@args, |%in-options);
-	return &map ?? $seq.map(&map) !! $seq;
+our sub find(*@args, *%options) is export(:DEFAULT :find) {
+	my %in-options = %options<follow-symlinks depth-first sorted loop-safe relative visitor as map>:delete:p;
+	return finder(|%options).in(|@args, |%in-options);
 }
 
 my multi rulify(Callable $rule) {
@@ -255,49 +252,45 @@ my &is-unique = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>)
 	}
 	!! sub (Bool %seen, IO::Path $item) { return True };
 
+my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Sub);
 method in(*@dirs,
 	Bool :$follow-symlinks = True,
 	Bool :$depth-first = False,
 	Bool :$sorted = True,
 	Bool :$loop-safe = True,
 	Bool :$relative = False,
+	Any:U :$as = IO::Path,
+	:&map = %as{$as},
 	:&visitor?,
 ) {
-	@dirs = '.' if not @dirs;
-	my @queue = @dirs.map: -> $filename {
-		my $path = $filename.IO;
-		($path, 0, $path, Bool);
-	};
+	my @queue = (@dirs || '.').map(*.IO).map: { ($^path, 0, $^path, Bool) };
 
-	gather {
-		my Bool %seen;
-		while @queue.elems {
-			my ($item, $depth, $origin, $result) = @( @queue.shift );
+	my Bool %seen;
+	my $seq := gather while @queue {
+		my ($item, $depth, $origin, $result) = @( @queue.shift );
 
-			without ($result) {
-				next if not $follow-symlinks and $item.l;
+		without ($result) {
+			next if not $follow-symlinks and $item.l;
 
-				$result = self.test($item, :$depth, :$origin);
+			$result = self.test($item, :$depth, :$origin);
 
-				if &visitor && $result {
-					visitor($item);
+			visitor($item) if &visitor && $result;
+
+			if $result !~~ Prune && $item.d && (!$loop-safe || is-unique(%seen, $item)) {
+				my @next = $item.dir.map: { ($^child, $depth + 1, $origin, Bool) };
+				@next .= sort if $sorted;
+				if ($depth-first) {
+					@next.push: ($item, $depth, $origin, $result);
+					@queue.prepend: @next;
+					next;
 				}
-
-				if $result !~~ Prune && $item.d && (!$loop-safe || is-unique(%seen, $item)) {
-					my @next = $item.dir.map: -> $child { ($child, $depth + 1, $origin, Bool) };
-					@next .= sort if $sorted;
-					if ($depth-first) {
-						@next.push: ($item, $depth, $origin, $result);
-						@queue.prepend: @next;
-						next;
-					}
-					else {
-						@queue.append: @next;
-					}
+				else {
+					@queue.append: @next;
 				}
 			}
-
-			take $relative ?? $item.relative($origin).IO !! $item if $result;
 		}
+
+		take $relative ?? $item.relative($origin).IO !! $item if $result;
 	}
+	return &map ?? $seq.map(&map) !! $seq;
 }
