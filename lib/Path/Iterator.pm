@@ -270,13 +270,11 @@ method in(*@dirs,
 		my ($item, $depth, $origin, $result) = @( @queue.shift );
 
 		without ($result) {
-			next if not $follow-symlinks and $item.l;
-
 			$result = self.test($item, :$depth, :$origin);
 
 			visitor($item) if &visitor && $result;
 
-			if $result !~~ Prune && $item.d && (!$loop-safe || is-unique(%seen, $item)) {
+			if $result !~~ Prune && $item.d && (!$loop-safe || is-unique(%seen, $item)) && ($follow-symlinks || !$item.l) {
 				my @next = $item.dir.map: { ($^child, $depth + 1, $origin, Bool) };
 				@next .= sort if $sorted;
 				if ($depth-first) {
