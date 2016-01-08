@@ -60,7 +60,7 @@ method none(Path::Iterator:U: *@no) {
 method not() {
 	my $obj = self;
 	return self.bless(:rules[sub ($item, *%opts) {
-		given $obj.test($item, |%opts) -> $original {
+		given $obj!test($item, |%opts) -> $original {
 			when Prune {
 				return Prune(+!$original);
 			}
@@ -84,7 +84,7 @@ multi method or(Path::Iterator:U: *@also) {
 	my @rules = sub ($item, *%opts) {
 		my $ret = False;
 		for @iterators -> $iterator {
-			given $iterator.test($item, |%opts) {
+			given $iterator!test($item, |%opts) {
 				when * === True {
 					return True;
 				}
@@ -104,7 +104,7 @@ method skip(*@garbage) {
 	my @iterators = |@garbage.map(&unrulify);
 	self.and: sub ($item, *%opts) {
 		for @iterators -> $iterator {
-			if $iterator.test($item, |%opts) !== False {
+			if $iterator!test($item, |%opts) !== False {
 				return Prune-Inclusive;
 			}
 		}
@@ -112,7 +112,7 @@ method skip(*@garbage) {
 	};
 }
 
-method test(IO::Path $item, *%args) {
+method !test(IO::Path $item, *%args) {
 	for @!rules -> &rule {
 		unless rule($item, |%args) -> $value {
 			return $value;
@@ -272,7 +272,7 @@ method in(*@dirs,
 		my ($item, $depth, $origin, $result) = @( @queue.shift );
 
 		without ($result) {
-			$result = self.test($item, :$depth, :$origin);
+			$result = self!test($item, :$depth, :$origin);
 
 			visitor($item) if &visitor && $result;
 
