@@ -15,7 +15,7 @@ our sub finder(*%options) is export(:find) {
 	return (Path::Iterator, |@keys).reduce: -> $current, $key {
 		my $value = %options{$key};
 		my $capture = do given $key {
-			when any(<skip-dir skip-subdir depth name ext size>) {
+			when any(<skip-dir skip-subdir depth name ext size path>) {
 				\($value);
 			}
 			when any(<and or none skip>) {
@@ -129,6 +129,9 @@ method name(Mu $name) {
 }
 multi method ext(Mu $ext) {
 	self.and: sub ($item, *%) { $item.extension ~~ $ext };
+}
+method path(Mu $path) {
+	self.and: sub ($item, *%) { $item ~~ $path };
 }
 method dangling() {
 	self.and: sub ($item, *%) { $item.l and not $item.e };
