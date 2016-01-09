@@ -1,7 +1,7 @@
 use v6;
 
 unit class Path::Iterator;
-has @.rules;
+has Sub @!rules;
 our enum Prune is export(:prune) <Prune-Inclusive Prune-Exclusive>;
 
 my %priority = (
@@ -43,11 +43,16 @@ our sub find(*@dirs, *%options) is export(:DEFAULT :find) {
 	return finder(|%options).in(|@dirs, |%in-options);
 }
 
-my multi rulify(Callable $rule) {
+submethod BUILD(:@!rules) { }
+method !rules() {
+	return @!rules;
+}
+
+my multi rulify(Sub $rule) {
 	return $rule;
 }
 my multi rulify(Path::Iterator:D $rule) {
-	return |$rule.rules;
+	return |$rule!rules;
 }
 multi method and(Path::Iterator:D $self: *@also) {
 	return self.bless(:rules(|@!rules, |@also.map(&rulify)));
@@ -71,8 +76,8 @@ method not() {
 		}
 	}]);
 }
-my multi unrulify(Callable $rule) {
-	return Path::Iterator.bless(:rules[$rule]);
+my multi unrulify(Sub $rule) {
+	return Path::Iterator.and($rule);
 }
 my multi unrulify(Path::Iterator:D $iterator) {
 	return $iterator;
