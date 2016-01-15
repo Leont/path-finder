@@ -21,7 +21,7 @@ our sub finder(*%options) is export(:find) {
 				\($value);
 			}
 			when any(<and or none skip>) {
-				\(|@($value));
+				\(|@($value).map: -> $entry { $entry ~~ Hash|Pair ?? finder(|%($entry)) !! $entry });
 			}
 			when 'shebang' {
 				my ($regex, %options) = @($value);
@@ -80,7 +80,7 @@ method not() {
 my multi unrulify(Sub $rule) {
 	return Path::Iterator.and($rule);
 }
-my multi unrulify(Path::Iterator:D $iterator) {
+my multi unrulify(Path::Iterator $iterator) {
 	return $iterator;
 }
 multi method or(Path::Iterator:U: $rule) {
