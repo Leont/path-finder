@@ -12,9 +12,9 @@ my %priority = (
 	5 => <not>
 ).flatmap: { ($_ => $^pair.key for @($^pair.value)) };
 
-our sub finder(*%options) is export(:find) {
+our sub finder(Path::Iterator :$base = Path::Iterator, Any:U :$in, *%options) is export(:find) {
 	my @keys = %options.keys.sort: { %priority{$_} // 3 };
-	return (Path::Iterator, |@keys).reduce: -> $current, $key {
+	return ($base, |@keys).reduce: -> $current, $key {
 		my $value = %options{$key};
 		my $capture = do given $key {
 			when any(<skip-dir skip-subdir depth name ext size path inode device mode nlinks uid gid accessed changed modified>) {
