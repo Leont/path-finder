@@ -120,12 +120,13 @@ method skip(*@garbage --> Path::Iterator:D) {
 }
 
 method !test(IO::Path $item, *%args) {
+	my $ret = True;
 	for @!rules -> &rule {
-		unless rule($item, |%args) -> $value {
-			return $value;
-		}
+		my $value = rule($item, |%args);
+		return $value unless $value;
+		$ret = $value if $value === Prune-Exclusive;
 	}
-	return True;
+	return $ret;
 }
 
 method name(Mu $name --> Path::Iterator:D) {
