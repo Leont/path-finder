@@ -1,7 +1,7 @@
 use v6;
 
 unit class Path::Iterator;
-has Sub @!rules;
+has Sub:D @!rules;
 our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
 
 my %priority = (
@@ -53,7 +53,7 @@ my multi rulify(Sub $rule) {
 	return $rule;
 }
 my multi rulify(Path::Iterator:D $rule) {
-	return |$rule!rules;
+	return $rule!rules;
 }
 proto method and(*@ --> Path::Iterator:D) { * }
 multi method and(Path::Iterator:D $self: *@also --> Path::Iterator:D) {
