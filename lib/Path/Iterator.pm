@@ -12,7 +12,7 @@ my %priority = (
 	5 => <not>
 ).flatmap: { ($_ => $^pair.key for @($^pair.value)) };
 
-our sub finder(Path::Iterator :$base = Path::Iterator, Any:U :$in, *%options) is export(:find) {
+our sub finder(Path::Iterator :$base = Path::Iterator, Any:U :$in, *%options --> Path::Iterator) is export(:find) {
 	my @keys = %options.keys.sort: { %priority{$_} // 3 };
 	return ($base, |@keys).reduce: -> $current, $key {
 		my $value = %options{$key};
@@ -39,7 +39,7 @@ our sub finder(Path::Iterator :$base = Path::Iterator, Any:U :$in, *%options) is
 	}
 }
 
-our sub find(*@dirs, *%options) is export(:DEFAULT :find) {
+our sub find(*@dirs, *%options --> Seq:D) is export(:DEFAULT :find) {
 	my %in-options = %options<follow-symlinks order sorted loop-safe relative visitor as map>:delete:p;
 	return finder(|%options).in(|@dirs, |%in-options);
 }
@@ -55,16 +55,16 @@ my multi rulify(Sub $rule) {
 my multi rulify(Path::Iterator:D $rule) {
 	return |$rule!rules;
 }
-multi method and(Path::Iterator:D $self: *@also) {
+multi method and(Path::Iterator:D $self: *@also --> Path::Iterator:D) {
 	return self.bless(:rules(|@!rules, |@also.map(&rulify)));
 }
-multi method and(Path::Iterator:U: *@also) {
+multi method and(Path::Iterator:U: *@also --> Path::Iterator:D) {
 	return self.bless(:rules(|@also.map(&rulify)));
 }
-method none(Path::Iterator:U: *@no) {
+method none(Path::Iterator:U: *@no --> Path::Iterator:D) {
 	return self.or(|@no).not;
 }
-method not() {
+method not(--> Path::Iterator:D) {
 	my $obj = self;
 	return self.bless(:rules[sub ($item, *%opts) {
 		given $obj!test($item, |%opts) -> $original {
@@ -83,10 +83,10 @@ my multi unrulify(Sub $rule) {
 my multi unrulify(Path::Iterator $iterator) {
 	return $iterator;
 }
-multi method or(Path::Iterator:U: $rule) {
+multi method or(Path::Iterator:U: $rule --> Path::Iterator:D) {
 	return unrulify($rule);
 }
-multi method or(Path::Iterator:U: *@also) {
+multi method or(Path::Iterator:U: *@also --> Path::Iterator:D) {
 	my @iterators = |@also.map(&unrulify);
 	my @rules = sub ($item, *%opts) {
 		my $ret = False;
@@ -107,7 +107,7 @@ multi method or(Path::Iterator:U: *@also) {
 	}
 	return self.bless(:@rules);
 }
-method skip(*@garbage) {
+method skip(*@garbage --> Path::Iterator:D) {
 	my @iterators = |@garbage.map(&unrulify);
 	self.and: sub ($item, *%opts) {
 		for @iterators -> $iterator {
@@ -128,19 +128,19 @@ method !test(IO::Path $item, *%args) {
 	return True;
 }
 
-method name(Mu $name) {
+method name(Mu $name --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item.basename ~~ $name };
 }
-multi method ext(Mu $ext) {
+multi method ext(Mu $ext --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item.extension ~~ $ext };
 }
-method path(Mu $path) {
+method path(Mu $path --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item ~~ $path };
 }
-method dangling() {
+method dangling( --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item.l and not $item.e };
 }
-method not-dangling() {
+method not-dangling( --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { not $item.l or $item.e };
 }
 
@@ -160,8 +160,8 @@ my %X-tests = %(
 	:p('fifo'),        :t('tty'),
 );
 for %X-tests.kv -> $test, $method {
-	$?CLASS.^add_method: $method,       method () { return self.and: sub ($item, *%) { ?$item."$test"() } };
-	$?CLASS.^add_method: "not-$method", method () { return self.and: sub ($item, *%) { !$item."$test"() } };
+	$?CLASS.^add_method: $method,       method ( --> Path::Iterator:D) { return self.and: sub ($item, *%) { ?$item."$test"() } };
+	$?CLASS.^add_method: "not-$method", method ( --> Path::Iterator:D) { return self.and: sub ($item, *%) { !$item."$test"() } };
 }
 
 {
@@ -175,22 +175,22 @@ for %X-tests.kv -> $test, $method {
 		gid    => nqp::const::STAT_GID,
 	);
 	for %stat-tests.kv -> $method, $constant {
-		$?CLASS.^add_method: $method, method (Mu $matcher) {
+		$?CLASS.^add_method: $method, method (Mu $matcher --> Path::Iterator:D) {
 			self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), $constant) ~~ $matcher }
 		}
 	}
 }
 for <accessed changed modified> -> $time-method {
-	$?CLASS.^add_method: $time-method, method (Mu $matcher) {
+	$?CLASS.^add_method: $time-method, method (Mu $matcher --> Path::Iterator:D) {
 		self.and: sub ($item, *%) { $item."$time-method"() ~~ $matcher }
 	}
 }
 $?CLASS.^compose;
 
-method size(Mu $size) {
+method size(Mu $size --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item.f && $item.s ~~ $size };
 }
-multi method depth(Range $depth-range) {
+multi method depth(Range $depth-range --> Path::Iterator:D) {
 	self.and: sub ($item, :$depth, *%) {
 		return do given $depth {
 			when $depth-range.max {
@@ -208,16 +208,16 @@ multi method depth(Range $depth-range) {
 		}
 	};
 }
-multi method depth(Int $depth) {
+multi method depth(Int $depth --> Path::Iterator:D) {
 	return self.depth($depth..$depth);
 }
-multi method depth(Mu $depth-match) {
+multi method depth(Mu $depth-match --> Path::Iterator:D) {
 	self.and: sub ($item, :$depth, *%) {
 		return $depth ~~ $depth-match;
 	}
 }
 
-method skip-dir(Mu $pattern) {
+method skip-dir(Mu $pattern --> Path::Iterator:D) {
 	self.and: sub ($item, *%) {
 		if $item.basename ~~ $pattern && $item.d {
 			return Prune-Inclusive;
@@ -225,7 +225,7 @@ method skip-dir(Mu $pattern) {
 		return True;
 	}
 }
-method skip-subdirs(Mu $pattern) {
+method skip-subdirs(Mu $pattern --> Path::Iterator:D) {
 	self.and: sub ($item, :$depth, *%) {
 		if $depth > 0 && $item.basename ~~ $pattern && $item.d {
 			return Prune-Inclusive;
@@ -233,7 +233,7 @@ method skip-subdirs(Mu $pattern) {
 		return True;
 	}
 }
-method skip-hidden() {
+method skip-hidden( --> Path::Iterator:D) {
 	self.and: sub ($item, :$depth, *%) {
 		if $depth > 0 && $item.basename ~~ rx/ ^ '.' / {
 			return Prune-Inclusive;
@@ -243,23 +243,23 @@ method skip-hidden() {
 }
 my $vcs-dirs = any(<.git .bzr .hg _darcs CVS RCS .svn>, |($*DISTRO.name eq 'mswin32' ?? '_svn' !! ()));
 my $vcs-files = none(rx/ '.#' $ /, rx/ ',v' $ /);
-method skip-vcs() {
+method skip-vcs(--> Path::Iterator:D) {
 	return self.skip-dir($vcs-dirs).name($vcs-files);
 }
 
-method shebang(Mu $pattern = rx/ ^ '#!' /, *%opts) {
+method shebang(Mu $pattern = rx/ ^ '#!' /, *%opts --> Path::Iterator:D) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		return $item.lines(|%opts)[0] ~~ $pattern;
 	}
 }
-method contents(Mu $pattern, *%opts) {
+method contents(Mu $pattern, *%opts --> Path::Iterator:D) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		return $item.slurp(|%opts) ~~ $pattern;
 	}
 }
-method line-match(Mu $pattern, *%opts) {
+method line-match(Mu $pattern, *%opts --> Path::Iterator:D) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		for $item.lines(|%opts) -> $line {
@@ -282,7 +282,7 @@ my &is-unique = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>)
 
 enum Order is export(:DEFAULT :order) < BreadthFirst PreOrder PostOrder >;
 
-my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Sub);
+my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Block);
 method in(*@dirs,
 	Bool:D :$follow-symlinks = True,
 	Order:D :$order = BreadthFirst,
@@ -292,6 +292,7 @@ method in(*@dirs,
 	Any:U :$as = IO::Path,
 	:&map = %as{$as},
 	:&visitor,
+	--> Seq:D
 ) {
 	my @queue = (@dirs || '.').map(*.IO).map: { ($^path, 0, $^path, Bool) };
 
