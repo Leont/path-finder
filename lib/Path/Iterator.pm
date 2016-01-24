@@ -2,7 +2,7 @@ use v6;
 
 unit class Path::Iterator;
 has Sub @!rules;
-our enum Prune is export(:prune) <Prune-Inclusive Prune-Exclusive>;
+our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
 
 my %priority = (
 	0 => <depth skip-hidden>,
@@ -95,10 +95,10 @@ multi method or(Path::Iterator:U: *@also --> Path::Iterator:D) {
 				when * === True {
 					return True;
 				}
-				when Prune-Exclusive {
+				when PruneExclusive {
 					$ret = $_;
 				}
-				when Prune-Inclusive {
+				when PruneInclusive {
 					$ret = $_ if $ret === False;
 				}
 			}
@@ -112,7 +112,7 @@ method skip(*@garbage --> Path::Iterator:D) {
 	self.and: sub ($item, *%opts) {
 		for @iterators -> $iterator {
 			if $iterator!test($item, |%opts) !== False {
-				return Prune-Inclusive;
+				return PruneInclusive;
 			}
 		}
 		return True;
@@ -124,7 +124,7 @@ method !test(IO::Path $item, *%args) {
 	for @!rules -> &rule {
 		my $value = rule($item, |%args);
 		return $value unless $value;
-		$ret = $value if $value === Prune-Exclusive;
+		$ret = $value if $value === PruneExclusive;
 	}
 	return $ret;
 }
@@ -195,7 +195,7 @@ multi method depth(Range $depth-range --> Path::Iterator:D) {
 	self.and: sub ($item, :$depth, *%) {
 		return do given $depth {
 			when $depth-range.max {
-				Prune-Exclusive;
+				PruneExclusive;
 			}
 			when $depth-range {
 				True;
@@ -204,7 +204,7 @@ multi method depth(Range $depth-range --> Path::Iterator:D) {
 				False;
 			}
 			default {
-				Prune-Inclusive;
+				PruneInclusive;
 			}
 		}
 	};
@@ -221,7 +221,7 @@ multi method depth(Mu $depth-match --> Path::Iterator:D) {
 method skip-dir(Mu $pattern --> Path::Iterator:D) {
 	self.and: sub ($item, *%) {
 		if $item.basename ~~ $pattern && $item.d {
-			return Prune-Inclusive;
+			return PruneInclusive;
 		}
 		return True;
 	}
@@ -229,7 +229,7 @@ method skip-dir(Mu $pattern --> Path::Iterator:D) {
 method skip-subdirs(Mu $pattern --> Path::Iterator:D) {
 	self.and: sub ($item, :$depth, *%) {
 		if $depth > 0 && $item.basename ~~ $pattern && $item.d {
-			return Prune-Inclusive;
+			return PruneInclusive;
 		}
 		return True;
 	}
@@ -237,7 +237,7 @@ method skip-subdirs(Mu $pattern --> Path::Iterator:D) {
 method skip-hidden( --> Path::Iterator:D) {
 	self.and: sub ($item, :$depth, *%) {
 		if $depth > 0 && $item.basename ~~ rx/ ^ '.' / {
-			return Prune-Inclusive;
+			return PruneInclusive;
 		}
 		return True;
 	}
