@@ -55,6 +55,7 @@ my multi rulify(Sub $rule) {
 my multi rulify(Path::Iterator:D $rule) {
 	return |$rule!rules;
 }
+proto method and(*@ --> Path::Iterator:D) { * }
 multi method and(Path::Iterator:D $self: *@also --> Path::Iterator:D) {
 	return self.bless(:rules(|@!rules, |@also.map(&rulify)));
 }
@@ -83,6 +84,7 @@ my multi unrulify(Sub $rule) {
 my multi unrulify(Path::Iterator $iterator) {
 	return $iterator;
 }
+proto method or(*@ --> Path::Iterator:D) { * }
 multi method or(Path::Iterator:U: $rule --> Path::Iterator:D) {
 	return unrulify($rule);
 }
@@ -132,7 +134,7 @@ method !test(IO::Path $item, *%args) {
 method name(Mu $name --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item.basename ~~ $name };
 }
-multi method ext(Mu $ext --> Path::Iterator:D) {
+method ext(Mu $ext --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item.extension ~~ $ext };
 }
 method path(Mu $path --> Path::Iterator:D) {
@@ -195,6 +197,7 @@ $?CLASS.^compose;
 method size(Mu $size --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item.f && $item.s ~~ $size };
 }
+proto method depth($ --> Path::Iterator:D) { * }
 multi method depth(Range $depth-range --> Path::Iterator:D) {
 	self.and: sub ($item, :$depth, *%) {
 		return do given $depth {
