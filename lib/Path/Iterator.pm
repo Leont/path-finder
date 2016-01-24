@@ -145,6 +145,10 @@ method not-dangling( --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { not $item.l or $item.e };
 }
 
+my sub add-method(Str $name, Method $method) {
+	$method.set_name($name);
+	$?CLASS.^add_method($name, $method);
+}
 my %X-tests = %(
 	:r('readable'),    :R('r-readable'),
 	:w('writable'),    :W('r-writable'),
@@ -161,8 +165,8 @@ my %X-tests = %(
 	:p('fifo'),        :t('tty'),
 );
 for %X-tests.kv -> $test, $method {
-	$?CLASS.^add_method: $method,       method ( --> Path::Iterator:D) { return self.and: sub ($item, *%) { ?$item."$test"() } };
-	$?CLASS.^add_method: "not-$method", method ( --> Path::Iterator:D) { return self.and: sub ($item, *%) { !$item."$test"() } };
+	add-method($method,       method ( --> Path::Iterator:D) { return self.and: sub ($item, *%) { ?$item."$test"() } });
+	add-method("not-$method", method ( --> Path::Iterator:D) { return self.and: sub ($item, *%) { !$item."$test"() } });
 }
 
 {
@@ -176,15 +180,15 @@ for %X-tests.kv -> $test, $method {
 		gid    => nqp::const::STAT_GID,
 	);
 	for %stat-tests.kv -> $method, $constant {
-		$?CLASS.^add_method: $method, method (Mu $matcher --> Path::Iterator:D) {
+		add-method($method, method (Mu $matcher --> Path::Iterator:D) {
 			self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), $constant) ~~ $matcher }
-		}
+		});
 	}
 }
 for <accessed changed modified> -> $time-method {
-	$?CLASS.^add_method: $time-method, method (Mu $matcher --> Path::Iterator:D) {
+	add-method($time-method, method (Mu $matcher --> Path::Iterator:D) {
 		self.and: sub ($item, *%) { $item."$time-method"() ~~ $matcher }
-	}
+	});
 }
 $?CLASS.^compose;
 
