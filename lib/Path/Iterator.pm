@@ -4,46 +4,6 @@ unit class Path::Iterator;
 has Sub:D @!rules;
 our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
 
-my %priority = (
-	0 => <depth skip-hidden>,
-	1 => <skip skip-dir skip-subdir skip-vcs>,
-	2 => <name ext>,
-	4 => <content line-match shebang>,
-	5 => <not>
-).flatmap: { ($_ => $^pair.key for @($^pair.value)) };
-
-our sub finder(Path::Iterator :$base = Path::Iterator, Any:U :$in, *%options --> Path::Iterator) is export(:find) {
-	my @keys = %options.keys.sort: { %priority{$_} // 3 };
-	return ($base, |@keys).reduce: -> $current, $key {
-		my $value = %options{$key};
-		my $capture = do given $key {
-			when any(<skip-dir skip-subdir depth name ext size path inode device mode nlinks uid gid accessed changed modified>) {
-				\($value);
-			}
-			when any(<and or none skip>) {
-				\(|@($value).map: -> $entry { $entry ~~ Hash|Pair ?? finder(|%($entry)) !! $entry });
-			}
-			when 'shebang' {
-				my ($regex, %options) = @($value);
-				$regex === True ?? \(|%options) !! \($regex, |%options);
-			}
-			when any(<contents line-match>) {
-				my ($regex, %options) = @($value);
-				\($regex, |%options);
-			}
-			default {
-				\();
-			}
-		}
-		$current."$key"(|$capture);
-	}
-}
-
-our sub find(*@dirs, *%options --> Seq:D) is export(:DEFAULT :find) {
-	my %in-options = %options<follow-symlinks order sorted loop-safe relative visitor as map>:delete:p;
-	return finder(|%options).in(|@dirs, |%in-options);
-}
-
 submethod BUILD(:@!rules) { }
 method !rules() {
 	return @!rules;
@@ -335,4 +295,39 @@ method in(*@dirs,
 		take $relative ?? $item.relative($origin).IO !! $item if $result;
 	}
 	return &map ?? $seq.map(&map) !! $seq;
+}
+
+my %priority = (
+	0 => <depth skip-hidden>,
+	1 => <skip skip-dir skip-subdir skip-vcs>,
+	2 => <name ext>,
+	4 => <content line-match shebang>,
+	5 => <not>
+).flatmap: { ($_ => $^pair.key for @($^pair.value)) };
+
+our sub finder(Path::Iterator :$base = Path::Iterator, Any:U :$in, *%options --> Path::Iterator) is export(:find) {
+	my @keys = %options.keys.sort: { %priority{$_} // 3 };
+	return ($base, |@keys).reduce: -> $object, $name {
+		my $method = $object.^lookup($name);
+		die "Finder key $name invalid" if not $method.defined or $method.signature.returns !~~ Path::Iterator;
+		my $signature = $method.signature;
+		my $value = %options{$name};
+		my $capture = $value ~~ Capture ?? $value !! do given $signature.count - 1 {
+			when 0 {
+				\();
+			}
+			when 1 {
+				\($value);
+			}
+			when Inf {
+				\(|@($value).map: -> $entry { $entry ~~ Hash|Pair ?? finder(|%($entry)) !! $entry });
+			}
+		}
+		$object.$method(|$capture);
+	}
+}
+
+our sub find(*@dirs, *%options --> Seq:D) is export(:DEFAULT :find) {
+	my %in-options = %options<follow-symlinks order sorted loop-safe relative visitor as map>:delete:p;
+	return finder(|%options).in(|@dirs, |%in-options);
 }
