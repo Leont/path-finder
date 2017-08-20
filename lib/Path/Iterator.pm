@@ -192,7 +192,7 @@ method skip-dir(Mu $pattern --> Path::Iterator:D) {
 		return True;
 	}
 }
-method skip-subdirs(Mu $pattern --> Path::Iterator:D) {
+method skip-subdir(Mu $pattern --> Path::Iterator:D) {
 	self.and: sub ($item, :$depth, *%) {
 		if $depth > 0 && $item.basename ~~ $pattern && $item.d {
 			return PruneInclusive;
@@ -226,7 +226,7 @@ method contents(Mu $pattern, *%opts --> Path::Iterator:D) {
 		return $item.slurp(|%opts) ~~ $pattern;
 	}
 }
-method line-match(Mu $pattern, *%opts --> Path::Iterator:D) {
+method line(Mu $pattern, *%opts --> Path::Iterator:D) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		for $item.lines(|%opts) -> $line {
@@ -300,7 +300,7 @@ my %priority = (
 	0 => <depth skip-hidden>,
 	1 => <skip skip-dir skip-subdir skip-vcs>,
 	2 => <name ext>,
-	4 => <content line-match shebang>,
+	4 => <content line shebang>,
 	5 => <not>
 ).flatmap: { ($_ => $^pair.key for @($^pair.value)) };
 
