@@ -112,19 +112,18 @@ my sub add-method(Str $name, Method $method) {
 	$?CLASS.^add_method($name, $method);
 }
 my %X-tests = %(
-	:r('readable'),    :R('r-readable'),
-	:w('writable'),    :W('r-writable'),
-	:x('executable'),  :X('r-executable'),
-	:o('owned'),       :O('r-owned'),
+	:r('readable'),
+	:w('writable'),
+	:x('executable'),
 
-	:e('exists'),      :f('file'),
-	:z('empty'),       :d('directory'),
-	:s('nonempty'),    :l('symlink'),
+	:rw('read-writable'),
+	:rwx('read-write-executable')
 
-	:u('setuid'),      :S('socket'),
-	:g('setgid'),      :b('block'),
-	:k('sticky'),      :c('character'),
-	:p('fifo'),        :t('tty'),
+	:e('exists'),
+	:f('file'),
+	:d('directory'),
+	:l('symlink'),
+	:z('empty'),
 );
 for %X-tests.kv -> $test, $method {
 	add-method($method,       method ( --> Path::Iterator:D) { return self.and: sub ($item, *%) { ?$item."$test"() } });
