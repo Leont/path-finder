@@ -22,20 +22,23 @@ multi method and(Path::Iterator:D $self: *@also --> Path::Iterator:D) {
 multi method and(Path::Iterator:U: *@also --> Path::Iterator:D) {
 	return self.bless(:rules(|@also.map(&rulify)));
 }
-method none(Path::Iterator:U: *@no --> Path::Iterator:D) {
+multi method none(Path::Iterator:U: *@no --> Path::Iterator:D) {
 	return self.or(|@no).not;
+}
+multi method none(Path::Iterator: Sub $rule --> Path::Iterator:D) {
+	return self.and: sub ($item, *%options) { return negate($rule($item, |%options)) };
+}
+
+my multi negate(Bool $value) {
+	return !$value;
+}
+my multi negate(Prune $value) {
+	return Prune(+!$value)
 }
 method not(--> Path::Iterator:D) {
 	my $obj = self;
 	return self.bless(:rules[sub ($item, *%opts) {
-		given $obj!test($item, |%opts) -> $original {
-			when Prune {
-				return Prune(+!$original);
-			}
-			default {
-				return !$original;
-			}
-		}
+		return negate($obj!test($item, |%opts))
 	}]);
 }
 my multi unrulify(Sub $rule) {
@@ -91,15 +94,23 @@ method !test(IO::Path $item, *%args) {
 	return $ret;
 }
 
-method name(Mu $name --> Path::Iterator:D) {
-	self.and: sub ($item, *%) { $item.basename ~~ $name };
+my sub add-method(Str $name, Method $method) {
+	$method.set_name($name);
+	$?CLASS.^add_method($name, $method);
 }
-method ext(Mu $ext --> Path::Iterator:D) {
-	self.and: sub ($item, *%) { $item.extension ~~ $ext };
+my sub add-matchable(Str $sub-name, &match-sub) {
+	add-method($sub-name, method (Mu $matcher, *%opts --> Path::Iterator:D) {
+		self.and: match-sub($matcher, |%opts);
+	});
+	add-method("not-$sub-name", method (Mu $matcher, *%opts --> Path::Iterator:D) {
+		self.none: match-sub($matcher, |%opts);
+	});
 }
-method path(Mu $path --> Path::Iterator:D) {
-	self.and: sub ($item, *%) { $item ~~ $path };
-}
+
+add-matchable('name', sub (Mu $name) { sub ($item, *%) { $item.basename ~~ $name } });
+add-matchable('ext', sub (Mu $ext) { sub ($item, *%) { $item.extension ~~ $ext } });
+add-matchable('path', sub (Mu $path) { sub ($item, *%) { $item ~~ $path } });
+
 method dangling( --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item.l and not $item.e };
 }
@@ -107,10 +118,6 @@ method not-dangling( --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { not $item.l or $item.e };
 }
 
-my sub add-method(Str $name, Method $method) {
-	$method.set_name($name);
-	$?CLASS.^add_method($name, $method);
-}
 my %X-tests = %(
 	:r('readable'),
 	:w('writable'),
@@ -141,48 +148,44 @@ for %X-tests.kv -> $test, $method {
 		gid    => nqp::const::STAT_GID,
 	);
 	for %stat-tests.kv -> $method, $constant {
-		add-method($method, method (Mu $matcher --> Path::Iterator:D) {
-			self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), $constant) ~~ $matcher }
-		});
+		add-matchable($method, sub (Mu $matcher) { sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), $constant) ~~ $matcher } });
 	}
 }
 for <accessed changed modified> -> $time-method {
-	add-method($time-method, method (Mu $matcher --> Path::Iterator:D) {
-		self.and: sub ($item, *%) { $item."$time-method"() ~~ $matcher }
-	});
+	add-matchable($time-method, sub (Mu $matcher) { sub ($item, *%) { $item."$time-method"() ~~ $matcher } });
 }
-$?CLASS.^compose;
 
-method size(Mu $size --> Path::Iterator:D) {
-	self.and: sub ($item, *%) { $item.f && $item.s ~~ $size };
-}
-proto method depth($ --> Path::Iterator:D) { * }
-multi method depth(Range $depth-range --> Path::Iterator:D) {
-	self.and: sub ($item, :$depth, *%) {
-		return do given $depth {
-			when $depth-range.max {
-				PruneExclusive;
+add-matchable('size', sub (Mu $size) { sub ($item, *%) { $item.f && $item.s ~~ $size }; });
+
+add-matchable('depth', sub (Mu $depth) {
+	multi depth(Range $depth-range) {
+		sub ($item, :$depth, *%) {
+			return do given $depth {
+				when $depth-range.max {
+					PruneExclusive;
+				}
+				when $depth-range {
+					True;
+				}
+				when * < $depth-range.min {
+					False;
+				}
+				default {
+					PruneInclusive;
+				}
 			}
-			when $depth-range {
-				True;
-			}
-			when * < $depth-range.min {
-				False;
-			}
-			default {
-				PruneInclusive;
-			}
-		}
-	};
-}
-multi method depth(Int $depth --> Path::Iterator:D) {
-	return self.depth($depth..$depth);
-}
-multi method depth(Mu $depth-match --> Path::Iterator:D) {
-	self.and: sub ($item, :$depth, *%) {
-		return $depth ~~ $depth-match;
+		};
 	}
-}
+	multi depth(Int $depth) {
+		return depth($depth..$depth);
+	}
+	multi depth(Mu $depth-match) {
+		sub ($item, :$depth, *%) {
+			return $depth ~~ $depth-match;
+		}
+	}
+	return depth($depth);
+});
 
 method skip-dir(Mu $pattern --> Path::Iterator:D) {
 	self.and: sub ($item, *%) {
@@ -214,27 +217,29 @@ method skip-vcs(--> Path::Iterator:D) {
 	return self.skip-dir($vcs-dirs).name($vcs-files);
 }
 
-method shebang(Mu $pattern = rx/ ^ '#!' /, *%opts --> Path::Iterator:D) {
-	self.and: sub ($item, *%) {
+add-matchable('shebang', sub (Mu $pattern = rx/ ^ '#!' /, *%opts) {
+	sub ($item, *%) {
 		return False unless $item.f;
 		return $item.lines(|%opts)[0] ~~ $pattern;
 	}
-}
-method contents(Mu $pattern, *%opts --> Path::Iterator:D) {
-	self.and: sub ($item, *%) {
+});
+add-matchable('contents', sub (Mu $pattern, *%opts) {
+	sub ($item, *%) {
 		return False unless $item.f;
 		return $item.slurp(|%opts) ~~ $pattern;
 	}
-}
-method line(Mu $pattern, *%opts --> Path::Iterator:D) {
-	self.and: sub ($item, *%) {
+});
+add-matchable('line', sub (Mu $pattern, *%opts) {
+	sub ($item, *%) {
 		return False unless $item.f;
 		for $item.lines(|%opts) -> $line {
 			return True if $line ~~ $pattern;
 		}
 		return False;
 	}
-}
+});
+
+$?CLASS.^compose;
 
 my &is-unique = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>)
 	?? sub (Bool %seen, IO::Path $item) {
