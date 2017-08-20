@@ -258,6 +258,7 @@ enum Order is export(:DEFAULT :order) < BreadthFirst PreOrder PostOrder >;
 my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Block);
 method in(*@dirs,
 	Bool:D :$follow-symlinks = True,
+	Bool:D :$report-symlinks = $follow-symlinks,
 	Order:D :$order = BreadthFirst,
 	Bool:D :$sorted = True,
 	Bool:D :$loop-safe = True,
@@ -268,14 +269,19 @@ method in(*@dirs,
 ) {
 	my @queue = (@dirs || '.').map(*.IO).map: { ($^path, 0, $^path, Bool) };
 
+	my Bool $check-symlinks = !$follow-symlinks || !$report-symlinks;
 	my Bool %seen;
 	my $seq := gather while @queue {
 		my ($item, $depth, $base, $result) = @( @queue.shift );
 
 		without ($result) {
-			$result = self!test($item, :$depth, :$base);
+			my $is-link = $check-symlinks ?? $item.l !! False;
+			next if $is-link && !$report-symlinks;
 
-			if $result !~~ Prune && $item.d && (!$loop-safe || is-unique(%seen, $item)) && ($follow-symlinks || !$item.l) {
+			$result = self!test($item, :$depth, :$base);
+			my $prune = $result ~~ Prune || $is-link && !$follow-symlinks;
+
+			if !$prune && $item.d && (!$loop-safe || is-unique(%seen, $item)) {
 				my @next = $item.dir.map: { ($^child, $depth + 1, $base, Bool) };
 				@next .= sort if $sorted;
 				given $order {
