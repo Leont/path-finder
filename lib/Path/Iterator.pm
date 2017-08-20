@@ -302,9 +302,9 @@ method in(*@dirs,
 }
 
 my %priority = (
-	0 => <depth skip-hidden>,
-	1 => <skip skip-dir skip-subdir skip-vcs>,
-	2 => <name ext>,
+	0 => <skip-hidden skip skip-dir skip-subdir skip-vcs>,
+	1 => <depth>,
+	2 => <name ext path>,
 	4 => <content line shebang>,
 	5 => <not>
 ).flatmap: { ($_ => $^pair.key for @($^pair.value)) };
