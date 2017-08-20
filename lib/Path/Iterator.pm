@@ -311,14 +311,13 @@ my %priority = (
 	5 => <not>
 ).flatmap: { ($_ => $^pair.key for @($^pair.value)) };
 
-our sub finder(Path::Iterator :$base = Path::Iterator, Any:U :$in, *%options --> Path::Iterator) is export(:find) {
+our sub finder(Path::Iterator :$base = Path::Iterator, *%options --> Path::Iterator) is export(:find) {
 	my @keys = %options.keys.sort: { %priority{$_} // 3 };
 	return ($base, |@keys).reduce: -> $object, $name {
 		my $method = $object.^lookup($name);
 		die "Finder key $name invalid" if not $method.defined or $method.signature.returns !~~ Path::Iterator;
-		my $signature = $method.signature;
 		my $value = %options{$name};
-		my $capture = $value ~~ Capture ?? $value !! do given $signature.count - 1 {
+		my $capture = $value ~~ Capture ?? $value !! do given $method.signature.count - 1 {
 			when 0 {
 				\();
 			}
