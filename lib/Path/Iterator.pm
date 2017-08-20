@@ -1,7 +1,7 @@
 use v6;
 
 unit class Path::Iterator;
-has Sub:D @!rules;
+has Callable:D @!rules;
 our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
 
 submethod BUILD(:@!rules) { }
@@ -9,7 +9,7 @@ method !rules() {
 	return @!rules;
 }
 
-my multi rulify(Sub $rule) {
+my multi rulify(Callable $rule) {
 	return $rule;
 }
 my multi rulify(Path::Iterator:D $rule) {
@@ -25,7 +25,7 @@ multi method and(Path::Iterator:U: *@also --> Path::Iterator:D) {
 multi method none(Path::Iterator:U: *@no --> Path::Iterator:D) {
 	return self.or(|@no).not;
 }
-multi method none(Path::Iterator: Sub $rule --> Path::Iterator:D) {
+multi method none(Path::Iterator: Callable $rule --> Path::Iterator:D) {
 	return self.and: sub ($item, *%options) { return negate($rule($item, |%options)) };
 }
 
@@ -41,7 +41,7 @@ method not(--> Path::Iterator:D) {
 		return negate($obj!test($item, |%opts))
 	}]);
 }
-my multi unrulify(Sub $rule) {
+my multi unrulify(Callable $rule) {
 	return Path::Iterator.and($rule);
 }
 my multi unrulify(Path::Iterator $iterator) {
