@@ -265,7 +265,6 @@ method in(*@dirs,
 	Bool:D :$relative = False,
 	Any:U :$as = IO::Path,
 	:&map = %as{$as},
-	:&visitor,
 	--> Seq:D
 ) {
 	my @queue = (@dirs || '.').map(*.IO).map: { ($^path, 0, $^path, Bool) };
@@ -276,8 +275,6 @@ method in(*@dirs,
 
 		without ($result) {
 			$result = self!test($item, :$depth, :$base);
-
-			visitor($item) if &visitor && $result;
 
 			if $result !~~ Prune && $item.d && (!$loop-safe || is-unique(%seen, $item)) && ($follow-symlinks || !$item.l) {
 				my @next = $item.dir.map: { ($^child, $depth + 1, $base, Bool) };
@@ -333,6 +330,6 @@ our sub finder(Path::Iterator :$base = Path::Iterator, *%options --> Path::Itera
 }
 
 our sub find(*@dirs, *%options --> Seq:D) is export(:DEFAULT :find) {
-	my %in-options = %options<follow-symlinks order sorted loop-safe relative visitor as map>:delete:p;
+	my %in-options = %options<follow-symlinks order sorted loop-safe relative as map>:delete:p;
 	return finder(|%options).in(|@dirs, |%in-options);
 }
