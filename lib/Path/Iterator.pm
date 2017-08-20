@@ -98,6 +98,14 @@ my sub add-method(Str $name, Method $method) {
 	$method.set_name($name);
 	$?CLASS.^add_method($name, $method);
 }
+my sub add-boolean(Str $sub-name, &rule) {
+	add-method($sub-name, method (--> Path::Iterator:D) {
+		self.and: &rule;
+	});
+	add-method("not-$sub-name", method (--> Path::Iterator:D) {
+		self.none: &rule;
+	});
+}
 my sub add-matchable(Str $sub-name, &match-sub) {
 	add-method($sub-name, method (Mu $matcher, *%opts --> Path::Iterator:D) {
 		self.and: match-sub($matcher, |%opts);
@@ -111,12 +119,7 @@ add-matchable('name', sub (Mu $name) { sub ($item, *%) { $item.basename ~~ $name
 add-matchable('ext', sub (Mu $ext) { sub ($item, *%) { $item.extension ~~ $ext } });
 add-matchable('path', sub (Mu $path) { sub ($item, *%) { $item ~~ $path } });
 
-method dangling( --> Path::Iterator:D) {
-	self.and: sub ($item, *%) { $item.l and not $item.e };
-}
-method not-dangling( --> Path::Iterator:D) {
-	self.and: sub ($item, *%) { not $item.l or $item.e };
-}
+add-boolean('dangling', sub ($item, *%) { $item.l and not $item.e });
 
 my %X-tests = %(
 	:r('readable'),
@@ -133,8 +136,7 @@ my %X-tests = %(
 	:z('empty'),
 );
 for %X-tests.kv -> $test, $method {
-	add-method($method,       method ( --> Path::Iterator:D) { return self.and: sub ($item, *%) { ?$item."$test"() } });
-	add-method("not-$method", method ( --> Path::Iterator:D) { return self.and: sub ($item, *%) { !$item."$test"() } });
+	add-boolean($method, sub ($item, *%) { ?$item."$test"() });
 }
 
 {
