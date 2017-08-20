@@ -144,7 +144,6 @@ for %X-tests.kv -> $test, $method {
 	my %stat-tests = %(
 		inode  => nqp::const::STAT_PLATFORM_INODE,
 		device => nqp::const::STAT_PLATFORM_DEV,
-		mode   => nqp::const::STAT_PLATFORM_MODE,
 		nlinks => nqp::const::STAT_PLATFORM_NLINKS,
 		uid    => nqp::const::STAT_UID,
 		gid    => nqp::const::STAT_GID,
@@ -153,8 +152,8 @@ for %X-tests.kv -> $test, $method {
 		add-matchable($method, sub (Mu $matcher) { sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), $constant) ~~ $matcher } });
 	}
 }
-for <accessed changed modified> -> $time-method {
-	add-matchable($time-method, sub (Mu $matcher) { sub ($item, *%) { $item."$time-method"() ~~ $matcher } });
+for <accessed changed modified mode> -> $stat-method {
+	add-matchable($stat-method, sub (Mu $matcher) { sub ($item, *%) { $item."$stat-method"() ~~ $matcher } });
 }
 
 add-matchable('size', sub (Mu $size) { sub ($item, *%) { $item.f && $item.s ~~ $size }; });
