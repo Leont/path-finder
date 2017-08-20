@@ -266,22 +266,22 @@ method in(*@dirs,
 
 	my Bool %seen;
 	my $seq := gather while @queue {
-		my ($item, $depth, $origin, $result) = @( @queue.shift );
+		my ($item, $depth, $base, $result) = @( @queue.shift );
 
 		without ($result) {
-			$result = self!test($item, :$depth, :$origin);
+			$result = self!test($item, :$depth, :$base);
 
 			visitor($item) if &visitor && $result;
 
 			if $result !~~ Prune && $item.d && (!$loop-safe || is-unique(%seen, $item)) && ($follow-symlinks || !$item.l) {
-				my @next = $item.dir.map: { ($^child, $depth + 1, $origin, Bool) };
+				my @next = $item.dir.map: { ($^child, $depth + 1, $base, Bool) };
 				@next .= sort if $sorted;
 				given $order {
 					when BreadthFirst {
 						@queue.append: @next;
 					}
 					when PostOrder {
-						@next.push: ($item, $depth, $origin, $result);
+						@next.push: ($item, $depth, $base, $result);
 						@queue.prepend: @next;
 						next;
 					}
@@ -292,7 +292,7 @@ method in(*@dirs,
 			}
 		}
 
-		take $relative ?? $item.relative($origin).IO !! $item if $result;
+		take $relative ?? $item.relative($base).IO !! $item if $result;
 	}
 	return &map ?? $seq.map(&map) !! $seq;
 }
