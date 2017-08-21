@@ -256,7 +256,8 @@ my &is-unique = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>)
 enum Order is export(:DEFAULT :order) < BreadthFirst PreOrder PostOrder >;
 
 my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Block);
-method in(*@dirs,
+multi method in(Path::Iterator:D:
+	*@dirs,
 	Bool:D :$follow-symlinks = True,
 	Bool:D :$report-symlinks = $follow-symlinks,
 	Order:D :$order = BreadthFirst,
@@ -303,6 +304,10 @@ method in(*@dirs,
 		take $relative ?? $item.relative($base).IO !! $item if $result;
 	}
 	return &map ?? $seq.map(&map) !! $seq;
+}
+
+multi method in(Path::Iterator:U: *@dirs, *%options --> Seq:D){
+	return self.new.in(|@dirs, |%options);
 }
 
 my %priority = (
