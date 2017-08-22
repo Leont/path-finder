@@ -158,35 +158,56 @@ for <accessed changed modified mode> -> $stat-method {
 
 add-matchable('size', sub (Mu $size) { sub ($item, *%) { $item.f && $item.s ~~ $size }; });
 
-add-matchable('depth', sub (Mu $depth) {
-	multi depth(Range $depth-range) {
-		sub ($item, :$depth, *%) {
-			return do given $depth {
-				when $depth-range.max {
-					PruneExclusive;
-				}
-				when $depth-range {
-					True;
-				}
-				when * < $depth-range.min {
-					False;
-				}
-				default {
-					PruneInclusive;
-				}
+proto method depth($ --> Path::Iterator:D) { * }
+multi method depth(Range $depth-range where .is-int --> Path::Iterator:D) {
+	my ($min, $max) = $depth-range.int-bounds;
+	self.and: sub ($item, :$depth, *%) {
+		return do given $depth {
+			when $max {
+				PruneExclusive;
 			}
-		};
-	}
-	multi depth(Int $depth) {
-		return depth($depth..$depth);
-	}
-	multi depth(Mu $depth-match) {
-		sub ($item, :$depth, *%) {
-			return $depth ~~ $depth-match;
+			when $depth-range {
+				True;
+			}
+			when * < $min {
+				False;
+			}
+			default {
+				PruneInclusive;
+			}
 		}
+	};
+}
+multi method depth(Int $depth --> Path::Iterator:D) {
+	return self.depth($depth..$depth);
+}
+multi method depth(Mu $depth-match --> Path::Iterator:D) {
+	sub ($item, :$depth, *%) {
+		return $depth ~~ $depth-match;
 	}
-	return depth($depth);
-});
+}
+
+proto method not-depth($ --> Path::Iterator:D) { * }
+multi method not-depth(Range $depth-range where .is-int --> Path::Iterator:D) {
+	my ($min, $max) = $depth-range.int-bounds;
+	if $min == 0 {
+		return self.depth(($max + 1) .. Inf);
+	}
+	elsif $max == Inf {
+		return self.depth(^$min);
+	}
+	else {
+		nextsame;
+	}
+}
+multi method not-depth(Int $depth --> Path::Iterator:D) {
+	return self.not-depth($depth..$depth);
+}
+multi method not-depth(Mu $depth-match --> Path::Iterator:D) {
+	self.and: sub ($item, :$depth, *%) {
+		return $depth !~~ $depth-match;
+	}
+}
 
 method skip-dir(Mu $pattern --> Path::Iterator:D) {
 	self.and: sub ($item, *%) {
