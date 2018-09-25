@@ -8,5 +8,6 @@
     },
     "author" : "Leon Timmermans",
     "depends" : [ ],
-    "source-url" : "git://github.com/leont/path-iterator.git"
+    "source-url" : "git://github.com/leont/path-iterator.git",
+    "license" : "Artistic-2.0"
 }
