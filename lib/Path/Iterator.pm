@@ -94,69 +94,94 @@ method !test(IO::Path $item, *%args) {
 	return $ret;
 }
 
-my sub add-method(Str $name, Method $method) {
-	$method.set_name($name);
-	$?CLASS.^add_method($name, $method);
-}
-my sub add-boolean(Str $sub-name, &rule) {
-	add-method($sub-name, method (--> Path::Iterator:D) {
-		self.and: &rule;
-	});
-	add-method("not-$sub-name", method (--> Path::Iterator:D) {
-		self.none: &rule;
-	});
-}
-my sub add-matchable(Str $sub-name, &match-sub) {
-	add-method($sub-name, method (Mu $matcher, *%opts --> Path::Iterator:D) {
-		self.and: match-sub($matcher, |%opts);
-	});
-	add-method("not-$sub-name", method (Mu $matcher, *%opts --> Path::Iterator:D) {
-		self.none: match-sub($matcher, |%opts);
-	});
-}
-
-add-matchable('name', sub (Mu $name) { sub ($item, *%) { $item.basename ~~ $name } });
-add-matchable('ext', sub (Mu $ext) { sub ($item, *%) { $item.extension ~~ $ext } });
-add-matchable('path', sub (Mu $path) { sub ($item, *%) { $item ~~ $path } });
-
-add-boolean('dangling', sub ($item, *%) { $item.l and not $item.e });
-
-my %X-tests = %(
-	:r('readable'),
-	:w('writable'),
-	:x('executable'),
-
-	:rw('read-writable'),
-	:rwx('read-write-executable')
-
-	:e('exists'),
-	:f('file'),
-	:d('directory'),
-	:l('symlink'),
-	:z('empty'),
-);
-for %X-tests.kv -> $test, $method {
-	add-boolean($method, sub ($item, *%) { ?$item."$test"() });
-}
-
-{
-	use nqp;
-	my %stat-tests = %(
-		inode  => nqp::const::STAT_PLATFORM_INODE,
-		device => nqp::const::STAT_PLATFORM_DEV,
-		nlinks => nqp::const::STAT_PLATFORM_NLINKS,
-		uid    => nqp::const::STAT_UID,
-		gid    => nqp::const::STAT_GID,
-	);
-	for %stat-tests.kv -> $method, $constant {
-		add-matchable($method, sub (Mu $matcher) { sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), $constant) ~~ $matcher } });
+BEGIN {
+	my sub add-method(Str $name, Method $method) {
+		$method.set_name($name);
+		$?CLASS.^add_method($name, $method);
 	}
-}
-for <accessed changed modified mode> -> $stat-method {
-	add-matchable($stat-method, sub (Mu $matcher) { sub ($item, *%) { $item."$stat-method"() ~~ $matcher } });
-}
+	my sub add-boolean(Str $sub-name, &rule) {
+		add-method($sub-name, method (--> Path::Iterator:D) {
+			self.and: &rule;
+		});
+		add-method("not-$sub-name", method (--> Path::Iterator:D) {
+			self.none: &rule;
+		});
+	}
+	my sub add-matchable(Str $sub-name, &match-sub) {
+		add-method($sub-name, method (Mu $matcher, *%opts --> Path::Iterator:D) {
+			self.and: match-sub($matcher, |%opts);
+		});
+		add-method("not-$sub-name", method (Mu $matcher, *%opts --> Path::Iterator:D) {
+			self.none: match-sub($matcher, |%opts);
+		});
+	}
 
-add-matchable('size', sub (Mu $size) { sub ($item, *%) { $item.f && $item.s ~~ $size }; });
+	add-matchable('name', sub (Mu $name) { sub ($item, *%) { $item.basename ~~ $name } });
+	add-matchable('ext', sub (Mu $ext) { sub ($item, *%) { $item.extension ~~ $ext } });
+	add-matchable('path', sub (Mu $path) { sub ($item, *%) { $item ~~ $path } });
+
+	add-boolean('dangling', sub ($item, *%) { $item.l and not $item.e });
+
+	my %X-tests = %(
+		:r('readable'),
+		:w('writable'),
+		:x('executable'),
+
+		:rw('read-writable'),
+		:rwx('read-write-executable')
+
+		:e('exists'),
+		:f('file'),
+		:d('directory'),
+		:l('symlink'),
+		:z('empty'),
+	);
+	for %X-tests.kv -> $test, $method {
+		add-boolean($method, sub ($item, *%) { ?$item."$test"() });
+	}
+
+	{
+		use nqp;
+		my %stat-tests = %(
+			inode  => nqp::const::STAT_PLATFORM_INODE,
+			device => nqp::const::STAT_PLATFORM_DEV,
+			nlinks => nqp::const::STAT_PLATFORM_NLINKS,
+			uid    => nqp::const::STAT_UID,
+			gid    => nqp::const::STAT_GID,
+		);
+		for %stat-tests.kv -> $method, $constant {
+			add-matchable($method, sub (Mu $matcher) { sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), $constant) ~~ $matcher } });
+		}
+	}
+	for <accessed changed modified mode> -> $stat-method {
+		add-matchable($stat-method, sub (Mu $matcher) { sub ($item, *%) { $item."$stat-method"() ~~ $matcher } });
+	}
+
+	add-matchable('size', sub (Mu $size) { sub ($item, *%) { $item.f && $item.s ~~ $size }; });
+
+	add-matchable('shebang', sub (Mu $pattern = rx/ ^ '#!' /, *%opts) {
+		sub ($item, *%) {
+			return False unless $item.f;
+			return $item.lines(|%opts)[0] ~~ $pattern;
+		}
+	});
+	add-matchable('contents', sub (Mu $pattern, *%opts) {
+		sub ($item, *%) {
+			return False unless $item.f;
+			return $item.slurp(|%opts) ~~ $pattern;
+		}
+	});
+	add-matchable('line', sub (Mu $pattern, *%opts) {
+		sub ($item, *%) {
+			return False unless $item.f;
+			for $item.lines(|%opts) -> $line {
+				return True if $line ~~ $pattern;
+			}
+			return False;
+		}
+	});
+	#$?CLASS.^compose;
+}
 
 proto method depth($ --> Path::Iterator:D) { * }
 multi method depth(Range $depth-range where .is-int --> Path::Iterator:D) {
@@ -238,30 +263,6 @@ my $vcs-files = none(rx/ '.#' $ /, rx/ ',v' $ /);
 method skip-vcs(--> Path::Iterator:D) {
 	return self.skip-dir($vcs-dirs).name($vcs-files);
 }
-
-add-matchable('shebang', sub (Mu $pattern = rx/ ^ '#!' /, *%opts) {
-	sub ($item, *%) {
-		return False unless $item.f;
-		return $item.lines(|%opts)[0] ~~ $pattern;
-	}
-});
-add-matchable('contents', sub (Mu $pattern, *%opts) {
-	sub ($item, *%) {
-		return False unless $item.f;
-		return $item.slurp(|%opts) ~~ $pattern;
-	}
-});
-add-matchable('line', sub (Mu $pattern, *%opts) {
-	sub ($item, *%) {
-		return False unless $item.f;
-		for $item.lines(|%opts) -> $line {
-			return True if $line ~~ $pattern;
-		}
-		return False;
-	}
-});
-
-$?CLASS.^compose;
 
 my &is-unique = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>)
 	?? sub (Bool %seen, IO::Path $item) {
