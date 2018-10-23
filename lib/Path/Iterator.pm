@@ -1,6 +1,7 @@
 use v6;
 
 unit class Path::Iterator;
+
 has Callable:D @!rules;
 our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
 
@@ -296,7 +297,7 @@ multi method in(Path::Iterator:D:
 	my $seq := gather while @queue {
 		my ($item, $depth, $base, $result) = @( @queue.shift );
 
-		without ($result) {
+		without $result {
 			my $is-link = $check-symlinks ?? $item.l !! False;
 			next if $is-link && !$report-symlinks;
 
