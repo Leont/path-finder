@@ -95,63 +95,88 @@ method !test(IO::Path $item, *%args) {
 	return $ret;
 }
 
-my sub add-method(Str $name, Method $method) {
-	$method.set_name($name);
-	$?CLASS.^add_method($name, $method);
-}
-my sub add-boolean(Str $sub-name, &rule) {
-	add-method($sub-name, method (Bool $value = True --> Path::Iterator:D) {
-		self.and: -> |args { rule(|args) == $value };
-	});
-}
-my sub add-matchable(Str $sub-name, &match-sub) {
-	add-method($sub-name, method (Mu $matcher, *%opts --> Path::Iterator:D) {
-		self.and: match-sub($matcher, |%opts);
-	});
+method name(Mu $name --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.basename ~~ $name };
 }
 
-add-matchable('name', sub (Mu $name) { sub ($item, *%) { $item.basename ~~ $name } });
-add-matchable('ext', sub (Mu $ext) { sub ($item, *%) { $item.extension ~~ $ext } });
-add-matchable('path', sub (Mu $path) { sub ($item, *%) { $item ~~ $path } });
+method ext(Mu $ext --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.extension ~~ $ext };
+}
 
-add-boolean('dangling', sub ($item, *%) { $item.l and not $item.e });
+method path(Mu $path --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item ~~ $path };
+}
 
-my %X-tests = %(
-	:r('readable'),
-	:w('writable'),
-	:x('executable'),
+method dangling(Bool $value = True --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { ($item.l && !$item.e) == $value };
+}
 
-	:rw('read-writable'),
-	:rwx('read-write-executable')
-
-	:e('exists'),
-	:f('file'),
-	:d('directory'),
-	:l('symlink'),
-	:z('empty'),
-);
-for %X-tests.kv -> $test, $method {
-	add-boolean($method, sub ($item, *%) { ?$item."$test"() });
+method readable(Bool $value = True --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.r == $value };
+}
+method writable(Bool $value = True --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.w == $value };
+}
+method executable(Bool $value = True --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.x == $value };
+}
+method read-writable(Bool $value = True --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.rw == $value };
+}
+method read-write-executable(Bool $value = True --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.rwx == $value };
+}
+method exists(Bool $value = True --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.e == $value };
+}
+method file(Bool $value = True --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.f == $value };
+}
+method directory(Bool $value = True --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.d == $value };
+}
+method symlink(Bool $value = True --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.l == $value }
+}
+method empty(Bool $value = True --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.z == $value };
 }
 
 {
 	use nqp;
-	my %stat-tests = %(
-		inode  => nqp::const::STAT_PLATFORM_INODE,
-		device => nqp::const::STAT_PLATFORM_DEV,
-		nlinks => nqp::const::STAT_PLATFORM_NLINKS,
-		uid    => nqp::const::STAT_UID,
-		gid    => nqp::const::STAT_GID,
-	);
-	for %stat-tests.kv -> $method, $constant {
-		add-matchable($method, sub (Mu $matcher) { sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), $constant) ~~ $matcher } });
+	method inode(Mu $inode --> Path::Iterator:D) {
+		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_INODE) ~~ $inode};
+	}
+	method device(Mu $device --> Path::Iterator:D) {
+		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_DEV) ~~ $device };
+	}
+	method nlinks(Mu $nlinks --> Path::Iterator:D) {
+		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_NLINKS) ~~ $nlinks };
+	}
+	method uid(Mu $uid --> Path::Iterator:D) {
+		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_UID) ~~ $uid };
+	}
+	method gid(Mu $gid --> Path::Iterator:D) {
+		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_GID) ~~ $gid };
 	}
 }
-for <accessed changed modified mode> -> $stat-method {
-	add-matchable($stat-method, sub (Mu $matcher) { sub ($item, *%) { $item."$stat-method"() ~~ $matcher } });
+
+method accessed(Mu $accessed --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.accessed ~~ $accessed };
+}
+method changed(Mu $changed --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.changed ~~ $changed };
+}
+method modified(Mu $modified--> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.modified ~~ $modified };
 }
 
-add-matchable('size', sub (Mu $size) { sub ($item, *%) { $item.f && $item.s ~~ $size }; });
+method mode(Mu $mode--> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.mode ~~ $mode };
+}
+method size(Mu $size --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item.s ~~ $size };
+}
 
 proto method depth($ --> Path::Iterator:D) { * }
 multi method depth(Range $depth-range where .is-int --> Path::Iterator:D) {
@@ -177,7 +202,7 @@ multi method depth(Int $depth --> Path::Iterator:D) {
 	return self.depth($depth..$depth);
 }
 multi method depth(Mu $depth-match --> Path::Iterator:D) {
-	sub ($item, :$depth, *%) {
+	self.and: sub ($item, :$depth, *%) {
 		return $depth ~~ $depth-match;
 	}
 }
@@ -198,43 +223,43 @@ method skip-subdir(Mu $pattern --> Path::Iterator:D) {
 		return True;
 	}
 }
-method skip-hidden( --> Path::Iterator:D) {
-	self.and: sub ($item, :$depth, *%) {
-		if $depth > 0 && $item.basename ~~ rx/ ^ '.' / {
-			return PruneInclusive;
+method skip-hidden(Bool $hide = True --> Path::Iterator:D) {
+	if $hide {
+		self.and: sub ($item, :$depth, *%) {
+			if $depth > 0 && $item.basename ~~ rx/ ^ '.' / {
+				return PruneInclusive;
+			}
+			return True;
 		}
-		return True;
 	}
 }
 my $vcs-dirs = any(<.git .bzr .hg _darcs CVS RCS .svn>, |($*DISTRO.name eq 'mswin32' ?? '_svn' !! ()));
 my $vcs-files = none(rx/ '.#' $ /, rx/ ',v' $ /);
-method skip-vcs(--> Path::Iterator:D) {
-	return self.skip-dir($vcs-dirs).name($vcs-files);
+method skip-vcs(Bool $hide = True --> Path::Iterator:D) {
+	self.skip-dir($vcs-dirs).name($vcs-files) if $hide;
 }
 
-add-matchable('shebang', sub (Mu $pattern = rx/ ^ '#!' /, *%opts) {
-	sub ($item, *%) {
+method shebang(Mu $pattern = rx/ ^ '#!' /, *%opts --> Path::Iterator:D) {
+	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		return $item.lines(|%opts)[0] ~~ $pattern;
-	}
-});
-add-matchable('contents', sub (Mu $pattern, *%opts) {
-	sub ($item, *%) {
+	};
+}
+method contents(Mu $pattern, *%opts --> Path::Iterator:D) {
+	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		return $item.slurp(|%opts) ~~ $pattern;
-	}
-});
-add-matchable('line', sub (Mu $pattern, *%opts) {
-	sub ($item, *%) {
+	};
+}
+method lines(Mu $pattern, *%opts --> Path::Iterator:D) {
+	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		for $item.lines(|%opts) -> $line {
 			return True if $line ~~ $pattern;
 		}
 		return False;
 	}
-});
-
-$?CLASS.^compose;
+}
 
 my &is-unique = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>)
 	?? sub (Bool %seen, IO::Path $item) {
@@ -319,9 +344,6 @@ our sub finder(Path::Iterator :$base = Path::Iterator, *%options --> Path::Itera
 		die "Finder key $name invalid" if not $method.defined or $method.signature.returns !~~ Path::Iterator;
 		my $value = %options{$name};
 		my $capture = $value ~~ Capture ?? $value !! do given $method.signature.count - 1 {
-			when 0 {
-				\();
-			}
 			when 1 {
 				\($value);
 			}
