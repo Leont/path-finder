@@ -100,19 +100,13 @@ my sub add-method(Str $name, Method $method) {
 	$?CLASS.^add_method($name, $method);
 }
 my sub add-boolean(Str $sub-name, &rule) {
-	add-method($sub-name, method (--> Path::Iterator:D) {
-		self.and: &rule;
-	});
-	add-method("not-$sub-name", method (--> Path::Iterator:D) {
-		self.none: &rule;
+	add-method($sub-name, method (Bool $value = True --> Path::Iterator:D) {
+		self.and: -> |args { rule(|args) == $value };
 	});
 }
 my sub add-matchable(Str $sub-name, &match-sub) {
 	add-method($sub-name, method (Mu $matcher, *%opts --> Path::Iterator:D) {
 		self.and: match-sub($matcher, |%opts);
-	});
-	add-method("not-$sub-name", method (Mu $matcher, *%opts --> Path::Iterator:D) {
-		self.none: match-sub($matcher, |%opts);
 	});
 }
 
@@ -185,28 +179,6 @@ multi method depth(Int $depth --> Path::Iterator:D) {
 multi method depth(Mu $depth-match --> Path::Iterator:D) {
 	sub ($item, :$depth, *%) {
 		return $depth ~~ $depth-match;
-	}
-}
-
-proto method not-depth($ --> Path::Iterator:D) { * }
-multi method not-depth(Range $depth-range where .is-int --> Path::Iterator:D) {
-	my ($min, $max) = $depth-range.int-bounds;
-	if $min == 0 {
-		return self.depth(($max + 1) .. Inf);
-	}
-	elsif $max == Inf {
-		return self.depth(^$min);
-	}
-	else {
-		nextsame;
-	}
-}
-multi method not-depth(Int $depth --> Path::Iterator:D) {
-	return self.not-depth($depth..$depth);
-}
-multi method not-depth(Mu $depth-match --> Path::Iterator:D) {
-	self.and: sub ($item, :$depth, *%) {
-		return $depth !~~ $depth-match;
 	}
 }
 
