@@ -338,12 +338,21 @@ multi method in(Path::Iterator:U: *@dirs, *%options --> Seq:D){
 }
 
 my %priority = (
-	0 => <skip-hidden skip skip-dir skip-subdir skip-vcs>,
-	1 => <depth>,
-	2 => <name ext path>,
-	4 => <content line shebang>,
-	5 => <not>
-).flatmap: { ($_ => $^pair.key for @($^pair.value)) };
+	skip        => 0,
+	skip-hidden => 0,
+	skip-dir    => 0,
+	skip-subdir => 0,
+	skip-vcs    => 0,
+	depth       => 1,
+	name        => 2,
+	ext         => 2,
+	path        => 2,
+	# default priority is 3
+	contents    => 4,
+	lines       => 4,
+	shebang     => 4,
+	not         => 5,
+);
 
 our sub finder(Path::Iterator :$base = Path::Iterator, *%options --> Path::Iterator) is export(:find) {
 	my @keys = %options.keys.sort: { %priority{$_} // 3 };
