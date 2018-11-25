@@ -239,12 +239,20 @@ method skip-vcs(Bool $hide = True --> Path::Iterator:D) {
 	self.skip-dir($vcs-dirs).name($vcs-files) if $hide;
 }
 
-method shebang(Mu $pattern = rx/ ^ '#!' /, *%opts --> Path::Iterator:D) {
+proto method shebang(Mu $pattern, *%opts --> Path::Iterator:D) { * }
+multi method shebang(Mu $pattern, *%opts) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		return $item.lines(|%opts)[0] ~~ $pattern;
 	};
 }
+multi method shebang(Bool $value = True, *%opts) {
+	self.and: sub ($item, *%) {
+		return !$value unless $item.f;
+		return ?($item.lines(|%opts)[0] ~~ rx/ ^ '#!' /) === $value;
+	};
+}
+
 method contents(Mu $pattern, *%opts --> Path::Iterator:D) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
