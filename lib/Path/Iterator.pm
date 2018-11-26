@@ -333,8 +333,8 @@ multi method in(Path::Iterator:D:
 	return &map ?? $seq.map(&map) !! $seq;
 }
 
-multi method in(Path::Iterator:U: *@dirs, *%options --> Seq:D){
-	return self.new.in(|@dirs, |%options);
+multi method in(Path::Iterator:U: |args --> Seq:D){
+	return self.new.in(|args);
 }
 
 my %priority = (
