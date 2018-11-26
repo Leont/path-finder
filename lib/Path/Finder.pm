@@ -1,6 +1,6 @@
 use v6;
 
-unit class Path::Finder;
+unit class Path::Finder:ver<0.1.0>;
 
 use IO::Glob;
 
