@@ -2,6 +2,8 @@ use v6;
 
 unit class Path::Iterator;
 
+use IO::Glob;
+
 has Callable:D @!rules;
 our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
 
@@ -95,8 +97,16 @@ method !test(IO::Path $item, *%args) {
 	return $ret;
 }
 
+my multi sub globulize(Any $name) {
+	return $name;
+}
+my multi sub globulize(Str $name) {
+	return glob($name);
+}
+
 method name(Mu $name --> Path::Iterator:D) {
-	self.and: sub ($item, *%) { $item.basename ~~ $name };
+	my $matcher = globulize($name);
+	self.and: sub ($item, *%) { $item.basename ~~ $matcher };
 }
 
 method ext(Mu $ext --> Path::Iterator:D) {
@@ -104,7 +114,8 @@ method ext(Mu $ext --> Path::Iterator:D) {
 }
 
 method path(Mu $path --> Path::Iterator:D) {
-	self.and: sub ($item, *%) { $item ~~ $path };
+	my $matcher = globulize($path);
+	self.and: sub ($item, *%) { $item ~~ $matcher };
 }
 
 method dangling(Bool $value = True --> Path::Iterator:D) {
