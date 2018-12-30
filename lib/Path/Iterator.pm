@@ -2,6 +2,8 @@ use v6;
 
 unit class Path::Iterator;
 
+use IO::Glob;
+
 has Callable:D @!rules;
 our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
 
@@ -95,16 +97,24 @@ method !test(IO::Path $item, *%args) {
 	return $ret;
 }
 
-method name(Mu $name --> Path::Iterator:D) {
+proto method name(Mu $ --> Path::Iterator:D) { * }
+multi method name(Mu $name --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item.basename ~~ $name };
+}
+multi method name(Str $name --> Path::Iterator:D) {
+	self.name(glob($name));
 }
 
 method ext(Mu $ext --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item.extension ~~ $ext };
 }
 
-method path(Mu $path --> Path::Iterator:D) {
+proto method path(Mu $ --> Path::Iterator:D) { * }
+multi method path(Mu $path --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item ~~ $path };
+}
+multi method path(Str $path --> Path::Iterator:D) {
+	self.path(glob($path));
 }
 
 method dangling(Bool $value = True --> Path::Iterator:D) {

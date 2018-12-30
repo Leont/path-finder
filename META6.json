@@ -7,7 +7,7 @@
         "Path::Iterator"       : "lib/Path/Iterator.pm"
     },
     "author" : "Leon Timmermans",
-    "depends" : [ ],
+    "depends" : [ "IO::Glob" ],
     "source-url" : "git://github.com/leont/path-iterator.git",
     "license" : "Artistic-2.0"
 }
