@@ -117,6 +117,14 @@ multi method path(Str $path --> Path::Iterator:D) {
 	self.path(glob($path));
 }
 
+proto method relpath(Mu $ --> Path::Iterator:D) { * }
+multi method relpath(Mu $path --> Path::Iterator:D) {
+	self.and: sub ($item, :$base, *%) { $item.relative($base).IO ~~ $path };
+}
+multi method relpath(Str $path --> Path::Iterator:D) {
+	self.relpath(glob($path));
+}
+
 method dangling(Bool $value = True --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { ($item.l && !$item.e) == $value };
 }
