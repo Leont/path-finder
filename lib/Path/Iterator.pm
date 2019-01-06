@@ -118,6 +118,11 @@ method path(Mu $path --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { $item ~~ $matcher };
 }
 
+method relpath(Mu $path --> Path::Iterator:D) {
+	my $matcher = globulize($path);
+	self.and: sub ($item, :$base, *%) { $item.relative($base).IO ~~ $matcher };
+}
+
 method dangling(Bool $value = True --> Path::Iterator:D) {
 	self.and: sub ($item, *%) { ($item.l && !$item.e) == $value };
 }
@@ -358,6 +363,7 @@ my %priority = (
 	name        => 2,
 	ext         => 2,
 	path        => 2,
+	relpath     => 2,
 	# default priority is 3
 	contents    => 4,
 	lines       => 4,
