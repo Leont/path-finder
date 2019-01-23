@@ -115,12 +115,16 @@ method ext(Mu $ext --> Path::Iterator:D) {
 
 method path(Mu $path --> Path::Iterator:D) {
 	my $matcher = globulize($path);
-	self.and: sub ($item, *%) { $item ~~ $matcher };
+	self.and: sub ($item, *%) { ~$item ~~ $matcher };
 }
 
 method relpath(Mu $path --> Path::Iterator:D) {
 	my $matcher = globulize($path);
-	self.and: sub ($item, :$base, *%) { $item.relative($base).IO ~~ $matcher };
+	self.and: sub ($item, :$base, *%) { $item.relative($base) ~~ $matcher };
+}
+
+method io(Mu $path --> Path::Iterator:D) {
+	self.and: sub ($item, *%) { $item ~~ $path };
 }
 
 method dangling(Bool $value = True --> Path::Iterator:D) {
@@ -364,6 +368,7 @@ my %priority = (
 	ext         => 2,
 	path        => 2,
 	relpath     => 2,
+	io          => 2,
 	# default priority is 3
 	contents    => 4,
 	lines       => 4,
