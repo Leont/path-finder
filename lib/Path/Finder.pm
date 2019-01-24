@@ -44,7 +44,7 @@ multi method none(Path::Finder:D: Callable $rule) {
 	return self.and: sub ($item, *%options) { return negate($rule($item, |%options)) };
 }
 
-my multi negate(Bool $value) {
+my multi negate(Bool() $value) {
 	return !$value;
 }
 my multi negate(Prune $value) {
