@@ -291,6 +291,7 @@ method contents(Mu $pattern, *%opts) is constraint(Content) {
 		return $item.slurp(|%opts) ~~ $pattern;
 	};
 }
+
 method lines(Mu $pattern, *%opts) is constraint(Content) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
@@ -298,6 +299,16 @@ method lines(Mu $pattern, *%opts) is constraint(Content) {
 			return True if $line ~~ $pattern;
 		}
 		return False;
+	}
+}
+
+method no-lines(Mu $pattern, *%opts) is constraint(Content) {
+	self.and: sub ($item, *%) {
+		return True unless $item.f;
+		for $item.lines(|%opts) -> $line {
+			return False if $line ~~ $pattern;
+		}
+		return True;
 	}
 }
 
