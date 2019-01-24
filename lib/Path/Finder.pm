@@ -321,6 +321,7 @@ my &is-unique = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>)
 		my $key = "$inode\-$device";
 		return False if %seen{$key};
 		return %seen{$key} = True;
+		CATCH { default { return True } }
 	}
 	!! sub (Bool %seen, IO::Path $item) { return True };
 
