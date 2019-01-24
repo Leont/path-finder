@@ -31,10 +31,10 @@ my multi rulify(Path::Finder:D $rule) {
 }
 proto method and(*@) is constraint(And) { * }
 multi method and(Path::Finder:D $self: *@also) {
-	return self.bless(:rules(|@!rules, |@also.map(&rulify)));
+	return self.bless(:rules(flat @!rules, @also.map(&rulify)));
 }
 multi method and(Path::Finder:U: *@also) {
-	return self.bless(:rules(|@also.map(&rulify)));
+	return self.bless(:rules(flat @also.map(&rulify)));
 }
 proto method none(|) is constraint(None) { * }
 multi method none(Path::Finder:U: *@no) {
