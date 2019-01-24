@@ -72,10 +72,10 @@ multi method or(Path::Finder:U: *@also)  {
 		my $ret = False;
 		for @iterators -> $iterator {
 			given $iterator!test($item, |%opts) {
-				when * === True {
-					return True;
-				}
 				when PruneExclusive {
+					return PruneExclusive;
+				}
+				when * === True {
 					$ret = $_;
 				}
 				when PruneInclusive {
