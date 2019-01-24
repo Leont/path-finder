@@ -12,11 +12,13 @@ method !rules() {
 	return @!rules;
 }
 
+our enum Precedence is export(:traits) <Skip Depth Name Stat Content And None Or Not>;
+
 our role Constraint {
-	has $.precedence is required;
+	has Precedence:D $.precedence is required;
 }
 
-multi sub trait_mod:<is>(Method $method, :$constraint!) is export(:traits) {
+multi sub trait_mod:<is>(Method $method, Precedence:D :$constraint!) is export(:traits) {
 	trait_mod:<of>($method, Path::Finder:D);
 	return $method does Constraint($constraint);
 }
@@ -27,14 +29,14 @@ my multi rulify(Callable $rule) {
 my multi rulify(Path::Finder:D $rule) {
 	return $rule!rules;
 }
-proto method and(*@) is constraint { * }
+proto method and(*@) is constraint(And) { * }
 multi method and(Path::Finder:D $self: *@also) {
 	return self.bless(:rules(|@!rules, |@also.map(&rulify)));
 }
 multi method and(Path::Finder:U: *@also) {
 	return self.bless(:rules(|@also.map(&rulify)));
 }
-proto method none(|) is constraint { * }
+proto method none(|) is constraint(None) { * }
 multi method none(Path::Finder:U: *@no) {
 	return self.or(|@no).not;
 }
@@ -60,11 +62,11 @@ my multi unrulify(Callable $rule) {
 my multi unrulify(Path::Finder $iterator) {
 	return $iterator;
 }
-proto method or(*@) is constraint { * }
-multi method or(Path::Finder:U: $rule) is constraint {
+proto method or(*@) is constraint(Or) { * }
+multi method or(Path::Finder:U: $rule) {
 	return unrulify($rule);
 }
-multi method or(Path::Finder:U: *@also) is constraint {
+multi method or(Path::Finder:U: *@also)  {
 	my @iterators = |@also.map(&unrulify);
 	my @rules = sub ($item, *%opts) {
 		my $ret = False;
@@ -85,7 +87,7 @@ multi method or(Path::Finder:U: *@also) is constraint {
 	}
 	return self.bless(:@rules);
 }
-method skip(*@garbage) is constraint {
+method skip(*@garbage) is constraint(Skip) {
 	my @iterators = |@garbage.map(&unrulify);
 	self.and: sub ($item, *%opts) {
 		for @iterators -> $iterator {
@@ -114,101 +116,101 @@ my multi sub globulize(Str $name) {
 	return glob($name);
 }
 
-method name(Mu $name) is constraint {
+method name(Mu $name) is constraint(Name) {
 	my $matcher = globulize($name);
 	self.and: sub ($item, *%) { $item.basename ~~ $matcher };
 }
 
-method ext(Mu $ext) is constraint {
+method ext(Mu $ext) is constraint(Name) {
 	self.and: sub ($item, *%) { $item.extension ~~ $ext };
 }
 
-method path(Mu $path) is constraint {
+method path(Mu $path) is constraint(Name) {
 	my $matcher = globulize($path);
 	self.and: sub ($item, *%) { ~$item ~~ $matcher };
 }
 
-method relpath(Mu $path ) is constraint {
+method relpath(Mu $path ) is constraint(Name) {
 	my $matcher = globulize($path);
 	self.and: sub ($item, :$base, *%) { $item.relative($base) ~~ $matcher };
 }
 
-method io(Mu $path) is constraint {
+method io(Mu $path) is constraint(Name) {
 	self.and: sub ($item, *%) { $item ~~ $path };
 }
 
-method dangling(Bool $value = True) is constraint {
+method dangling(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { ($item.l && !$item.e) == $value };
 }
 
-method readable(Bool $value = True) is constraint {
+method readable(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.r == $value };
 }
-method writable(Bool $value = True) is constraint {
+method writable(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.w == $value };
 }
-method executable(Bool $value = True) is constraint {
+method executable(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.x == $value };
 }
-method read-writable(Bool $value = True) is constraint {
+method read-writable(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.rw == $value };
 }
-method read-write-executable(Bool $value = True) is constraint {
+method read-write-executable(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.rwx == $value };
 }
-method exists(Bool $value = True) is constraint {
+method exists(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.e == $value };
 }
-method file(Bool $value = True) is constraint {
+method file(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.f == $value };
 }
-method directory(Bool $value = True) is constraint {
+method directory(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.d == $value };
 }
-method symlink(Bool $value = True) is constraint {
+method symlink(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.l == $value }
 }
-method empty(Bool $value = True) is constraint {
+method empty(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.z == $value };
 }
 
 {
 	use nqp;
-	method inode(Mu $inode) is constraint {
+	method inode(Mu $inode) is constraint(Stat) {
 		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_INODE) ~~ $inode};
 	}
-	method device(Mu $device) is constraint {
+	method device(Mu $device) is constraint(Stat) {
 		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_DEV) ~~ $device };
 	}
-	method nlinks(Mu $nlinks) is constraint {
+	method nlinks(Mu $nlinks) is constraint(Stat) {
 		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_NLINKS) ~~ $nlinks };
 	}
-	method uid(Mu $uid) is constraint {
+	method uid(Mu $uid) is constraint(Stat) {
 		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_UID) ~~ $uid };
 	}
-	method gid(Mu $gid) is constraint {
+	method gid(Mu $gid) is constraint(Stat) {
 		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_GID) ~~ $gid };
 	}
 }
 
-method accessed(Mu $accessed) is constraint {
+method accessed(Mu $accessed) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.accessed ~~ $accessed };
 }
-method changed(Mu $changed) is constraint {
+method changed(Mu $changed) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.changed ~~ $changed };
 }
-method modified(Mu $modified) is constraint {
+method modified(Mu $modified) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.modified ~~ $modified };
 }
 
-method mode(Mu $mode) is constraint {
+method mode(Mu $mode) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.mode ~~ $mode };
 }
-method size(Mu $size) is constraint {
+method size(Mu $size) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.s ~~ $size };
 }
 
-proto method depth($) is constraint { * }
+proto method depth($) is constraint(Depth) { * }
 multi method depth(Range $depth-range where .is-int) {
 	my ($min, $max) = $depth-range.int-bounds;
 	self.and: sub ($item, :$depth, *%) {
@@ -237,7 +239,7 @@ multi method depth(Mu $depth-match) {
 	}
 }
 
-method skip-dir(Mu $pattern) is constraint {
+method skip-dir(Mu $pattern) is constraint(Skip) {
 	self.and: sub ($item, *%) {
 		if $item.basename ~~ $pattern && $item.d {
 			return PruneInclusive;
@@ -245,7 +247,7 @@ method skip-dir(Mu $pattern) is constraint {
 		return True;
 	}
 }
-method skip-subdir(Mu $pattern) is constraint {
+method skip-subdir(Mu $pattern) is constraint(Skip) {
 	self.and: sub ($item, :$depth, *%) {
 		if $depth > 0 && $item.basename ~~ $pattern && $item.d {
 			return PruneInclusive;
@@ -253,7 +255,7 @@ method skip-subdir(Mu $pattern) is constraint {
 		return True;
 	}
 }
-method skip-hidden(Bool $hide = True) is constraint {
+method skip-hidden(Bool $hide = True) is constraint(Skip) {
 	if $hide {
 		self.and: sub ($item, :$depth, *%) {
 			if $depth > 0 && $item.basename ~~ rx/ ^ '.' / {
@@ -265,11 +267,11 @@ method skip-hidden(Bool $hide = True) is constraint {
 }
 my $vcs-dirs = any(<.git .bzr .hg _darcs CVS RCS .svn>, |($*DISTRO.name eq 'mswin32' ?? '_svn' !! ()));
 my $vcs-files = none(rx/ '.#' $ /, rx/ ',v' $ /);
-method skip-vcs(Bool $hide = True) is constraint {
+method skip-vcs(Bool $hide = True) is constraint(Skip) {
 	self.skip-dir($vcs-dirs).name($vcs-files) if $hide;
 }
 
-proto method shebang(Mu $pattern, *%opts) is constraint { * }
+proto method shebang(Mu $pattern, *%opts) is constraint(Content) { * }
 multi method shebang(Mu $pattern, *%opts) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
@@ -283,13 +285,13 @@ multi method shebang(Bool $value = True, *%opts) {
 	};
 }
 
-method contents(Mu $pattern, *%opts) is constraint {
+method contents(Mu $pattern, *%opts) is constraint(Content) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		return $item.slurp(|%opts) ~~ $pattern;
 	};
 }
-method lines(Mu $pattern, *%opts) is constraint {
+method lines(Mu $pattern, *%opts) is constraint(Content) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		for $item.lines(|%opts) -> $line {
@@ -367,31 +369,19 @@ multi method in(Path::Finder:U: |args --> Seq:D){
 	return self.new.in(|args);
 }
 
-my %priority = (
-	skip        => 0,
-	skip-hidden => 0,
-	skip-dir    => 0,
-	skip-subdir => 0,
-	skip-vcs    => 0,
-	depth       => 1,
-	name        => 2,
-	ext         => 2,
-	path        => 2,
-	relpath     => 2,
-	io          => 2,
-	# default priority is 3
-	contents    => 4,
-	lines       => 4,
-	shebang     => 4,
-	not         => 5,
-);
-
 our sub finder(Path::Finder :$base = Path::Finder, *%options --> Path::Finder) is export(:find) {
-	my @keys = %options.keys.sort: { %priority{$_} // 3 };
-	return ($base, |@keys).reduce: -> $object, $name {
-		my $method = $object.^lookup($name);
+	class Entry {
+		has $.name;
+		has $.method handles <precedence>;
+		has $.capture;
+		method call-with($object) {
+			return $object.$!method(|$!capture);
+		}
+	};
+	my Entry @entries;
+	for %options.kv -> $name, $value {
+		my $method = $base.^lookup($name);
 		die "Finder key $name invalid" if not $method.defined or $method !~~ Constraint;
-		my $value = %options{$name};
 		my $capture = $value ~~ Capture ?? $value !! do given $method.signature.count - 1 {
 			when 1 {
 				\($value);
@@ -400,7 +390,11 @@ our sub finder(Path::Finder :$base = Path::Finder, *%options --> Path::Finder) i
 				\(|@($value).map: -> $entry { $entry ~~ Hash|Pair ?? finder(|%($entry)) !! $entry });
 			}
 		}
-		$object.$method(|$capture);
+		@entries.push: Entry.new(:$name, :$method, :$capture);
+	}
+	my @keys = @entries.sort(*.precedence);
+	return ($base, |@keys).reduce: -> $object, $entry {
+		$entry.call-with($object);
 	}
 }
 
