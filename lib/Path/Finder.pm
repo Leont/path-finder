@@ -91,7 +91,8 @@ method skip(*@garbage) is constraint(Skip) {
 	my @iterators = |@garbage.map(&unrulify);
 	self.and: sub ($item, *%opts) {
 		for @iterators -> $iterator {
-			if $iterator!test($item, |%opts) !== False {
+			my $var = $iterator!test($item, |%opts);
+			if $var || $var ~~ Prune {
 				return PruneInclusive;
 			}
 		}
