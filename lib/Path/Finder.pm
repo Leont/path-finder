@@ -12,23 +12,33 @@ method !rules() {
 	return @!rules;
 }
 
+our role Constraint {
+	has $.precedence is required;
+}
+
+multi sub trait_mod:<is>(Method $method, :$constraint!) is export(:traits) {
+	trait_mod:<of>($method, Path::Finder:D);
+	return $method does Constraint($constraint);
+}
+
 my multi rulify(Callable $rule) {
 	return $rule;
 }
 my multi rulify(Path::Finder:D $rule) {
 	return $rule!rules;
 }
-proto method and(*@ --> Path::Finder:D) { * }
-multi method and(Path::Finder:D $self: *@also --> Path::Finder:D) {
+proto method and(*@) is constraint { * }
+multi method and(Path::Finder:D $self: *@also) {
 	return self.bless(:rules(|@!rules, |@also.map(&rulify)));
 }
-multi method and(Path::Finder:U: *@also --> Path::Finder:D) {
+multi method and(Path::Finder:U: *@also) {
 	return self.bless(:rules(|@also.map(&rulify)));
 }
-multi method none(Path::Finder:U: *@no --> Path::Finder:D) {
+proto method none(|) is constraint { * }
+multi method none(Path::Finder:U: *@no) {
 	return self.or(|@no).not;
 }
-multi method none(Path::Finder: Callable $rule --> Path::Finder:D) {
+multi method none(Path::Finder:D: Callable $rule) {
 	return self.and: sub ($item, *%options) { return negate($rule($item, |%options)) };
 }
 
@@ -38,7 +48,7 @@ my multi negate(Bool $value) {
 my multi negate(Prune $value) {
 	return Prune(+!$value)
 }
-method not(--> Path::Finder:D) {
+method not() {
 	my $obj = self;
 	return self.bless(:rules[sub ($item, *%opts) {
 		return negate($obj!test($item, |%opts))
@@ -50,11 +60,11 @@ my multi unrulify(Callable $rule) {
 my multi unrulify(Path::Finder $iterator) {
 	return $iterator;
 }
-proto method or(*@ --> Path::Finder:D) { * }
-multi method or(Path::Finder:U: $rule --> Path::Finder:D) {
+proto method or(*@) is constraint { * }
+multi method or(Path::Finder:U: $rule) is constraint {
 	return unrulify($rule);
 }
-multi method or(Path::Finder:U: *@also --> Path::Finder:D) {
+multi method or(Path::Finder:U: *@also) is constraint {
 	my @iterators = |@also.map(&unrulify);
 	my @rules = sub ($item, *%opts) {
 		my $ret = False;
@@ -75,7 +85,7 @@ multi method or(Path::Finder:U: *@also --> Path::Finder:D) {
 	}
 	return self.bless(:@rules);
 }
-method skip(*@garbage --> Path::Finder:D) {
+method skip(*@garbage) is constraint {
 	my @iterators = |@garbage.map(&unrulify);
 	self.and: sub ($item, *%opts) {
 		for @iterators -> $iterator {
@@ -104,102 +114,102 @@ my multi sub globulize(Str $name) {
 	return glob($name);
 }
 
-method name(Mu $name --> Path::Iterator:D) {
+method name(Mu $name) is constraint {
 	my $matcher = globulize($name);
 	self.and: sub ($item, *%) { $item.basename ~~ $matcher };
 }
 
-method ext(Mu $ext --> Path::Finder:D) {
+method ext(Mu $ext) is constraint {
 	self.and: sub ($item, *%) { $item.extension ~~ $ext };
 }
 
-method path(Mu $path --> Path::Iterator:D) {
+method path(Mu $path) is constraint {
 	my $matcher = globulize($path);
 	self.and: sub ($item, *%) { ~$item ~~ $matcher };
 }
 
-method relpath(Mu $path --> Path::Iterator:D) {
+method relpath(Mu $path ) is constraint {
 	my $matcher = globulize($path);
 	self.and: sub ($item, :$base, *%) { $item.relative($base) ~~ $matcher };
 }
 
-method io(Mu $path --> Path::Finder:D) {
+method io(Mu $path) is constraint {
 	self.and: sub ($item, *%) { $item ~~ $path };
 }
 
-method dangling(Bool $value = True --> Path::Finder:D) {
+method dangling(Bool $value = True) is constraint {
 	self.and: sub ($item, *%) { ($item.l && !$item.e) == $value };
 }
 
-method readable(Bool $value = True --> Path::Finder:D) {
+method readable(Bool $value = True) is constraint {
 	self.and: sub ($item, *%) { $item.r == $value };
 }
-method writable(Bool $value = True --> Path::Finder:D) {
+method writable(Bool $value = True) is constraint {
 	self.and: sub ($item, *%) { $item.w == $value };
 }
-method executable(Bool $value = True --> Path::Finder:D) {
+method executable(Bool $value = True) is constraint {
 	self.and: sub ($item, *%) { $item.x == $value };
 }
-method read-writable(Bool $value = True --> Path::Finder:D) {
+method read-writable(Bool $value = True) is constraint {
 	self.and: sub ($item, *%) { $item.rw == $value };
 }
-method read-write-executable(Bool $value = True --> Path::Finder:D) {
+method read-write-executable(Bool $value = True) is constraint {
 	self.and: sub ($item, *%) { $item.rwx == $value };
 }
-method exists(Bool $value = True --> Path::Finder:D) {
+method exists(Bool $value = True) is constraint {
 	self.and: sub ($item, *%) { $item.e == $value };
 }
-method file(Bool $value = True --> Path::Finder:D) {
+method file(Bool $value = True) is constraint {
 	self.and: sub ($item, *%) { $item.f == $value };
 }
-method directory(Bool $value = True --> Path::Finder:D) {
+method directory(Bool $value = True) is constraint {
 	self.and: sub ($item, *%) { $item.d == $value };
 }
-method symlink(Bool $value = True --> Path::Finder:D) {
+method symlink(Bool $value = True) is constraint {
 	self.and: sub ($item, *%) { $item.l == $value }
 }
-method empty(Bool $value = True --> Path::Finder:D) {
+method empty(Bool $value = True) is constraint {
 	self.and: sub ($item, *%) { $item.z == $value };
 }
 
 {
 	use nqp;
-	method inode(Mu $inode --> Path::Finder:D) {
+	method inode(Mu $inode) is constraint {
 		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_INODE) ~~ $inode};
 	}
-	method device(Mu $device --> Path::Finder:D) {
+	method device(Mu $device) is constraint {
 		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_DEV) ~~ $device };
 	}
-	method nlinks(Mu $nlinks --> Path::Finder:D) {
+	method nlinks(Mu $nlinks) is constraint {
 		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_NLINKS) ~~ $nlinks };
 	}
-	method uid(Mu $uid --> Path::Finder:D) {
+	method uid(Mu $uid) is constraint {
 		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_UID) ~~ $uid };
 	}
-	method gid(Mu $gid --> Path::Finder:D) {
+	method gid(Mu $gid) is constraint {
 		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_GID) ~~ $gid };
 	}
 }
 
-method accessed(Mu $accessed --> Path::Finder:D) {
+method accessed(Mu $accessed) is constraint {
 	self.and: sub ($item, *%) { $item.accessed ~~ $accessed };
 }
-method changed(Mu $changed --> Path::Finder:D) {
+method changed(Mu $changed) is constraint {
 	self.and: sub ($item, *%) { $item.changed ~~ $changed };
 }
-method modified(Mu $modified--> Path::Finder:D) {
+method modified(Mu $modified) is constraint {
 	self.and: sub ($item, *%) { $item.modified ~~ $modified };
 }
 
-method mode(Mu $mode--> Path::Finder:D) {
+method mode(Mu $mode) is constraint {
 	self.and: sub ($item, *%) { $item.mode ~~ $mode };
 }
-method size(Mu $size --> Path::Finder:D) {
+method size(Mu $size) is constraint {
 	self.and: sub ($item, *%) { $item.s ~~ $size };
 }
 
-proto method depth($ --> Path::Finder:D) { * }
-multi method depth(Range $depth-range where .is-int --> Path::Finder:D) {
+proto method depth($) is constraint { * }
+multi method depth(Range $depth-range where .is-int) {
 	my ($min, $max) = $depth-range.int-bounds;
 	self.and: sub ($item, :$depth, *%) {
 		return do given $depth {
@@ -218,16 +228,16 @@ multi method depth(Range $depth-range where .is-int --> Path::Finder:D) {
 		}
 	};
 }
-multi method depth(Int $depth --> Path::Finder:D) {
+multi method depth(Int $depth) {
 	return self.depth($depth..$depth);
 }
-multi method depth(Mu $depth-match --> Path::Finder:D) {
+multi method depth(Mu $depth-match) {
 	self.and: sub ($item, :$depth, *%) {
 		return $depth ~~ $depth-match;
 	}
 }
 
-method skip-dir(Mu $pattern --> Path::Finder:D) {
+method skip-dir(Mu $pattern) is constraint {
 	self.and: sub ($item, *%) {
 		if $item.basename ~~ $pattern && $item.d {
 			return PruneInclusive;
@@ -235,7 +245,7 @@ method skip-dir(Mu $pattern --> Path::Finder:D) {
 		return True;
 	}
 }
-method skip-subdir(Mu $pattern --> Path::Finder:D) {
+method skip-subdir(Mu $pattern) is constraint {
 	self.and: sub ($item, :$depth, *%) {
 		if $depth > 0 && $item.basename ~~ $pattern && $item.d {
 			return PruneInclusive;
@@ -243,7 +253,7 @@ method skip-subdir(Mu $pattern --> Path::Finder:D) {
 		return True;
 	}
 }
-method skip-hidden(Bool $hide = True --> Path::Finder:D) {
+method skip-hidden(Bool $hide = True) is constraint {
 	if $hide {
 		self.and: sub ($item, :$depth, *%) {
 			if $depth > 0 && $item.basename ~~ rx/ ^ '.' / {
@@ -255,11 +265,11 @@ method skip-hidden(Bool $hide = True --> Path::Finder:D) {
 }
 my $vcs-dirs = any(<.git .bzr .hg _darcs CVS RCS .svn>, |($*DISTRO.name eq 'mswin32' ?? '_svn' !! ()));
 my $vcs-files = none(rx/ '.#' $ /, rx/ ',v' $ /);
-method skip-vcs(Bool $hide = True --> Path::Finder:D) {
+method skip-vcs(Bool $hide = True) is constraint {
 	self.skip-dir($vcs-dirs).name($vcs-files) if $hide;
 }
 
-proto method shebang(Mu $pattern, *%opts --> Path::Finder:D) { * }
+proto method shebang(Mu $pattern, *%opts) is constraint { * }
 multi method shebang(Mu $pattern, *%opts) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
@@ -273,13 +283,13 @@ multi method shebang(Bool $value = True, *%opts) {
 	};
 }
 
-method contents(Mu $pattern, *%opts --> Path::Finder:D) {
+method contents(Mu $pattern, *%opts) is constraint {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		return $item.slurp(|%opts) ~~ $pattern;
 	};
 }
-method lines(Mu $pattern, *%opts --> Path::Finder:D) {
+method lines(Mu $pattern, *%opts) is constraint {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		for $item.lines(|%opts) -> $line {
@@ -380,7 +390,7 @@ our sub finder(Path::Finder :$base = Path::Finder, *%options --> Path::Finder) i
 	my @keys = %options.keys.sort: { %priority{$_} // 3 };
 	return ($base, |@keys).reduce: -> $object, $name {
 		my $method = $object.^lookup($name);
-		die "Finder key $name invalid" if not $method.defined or $method.signature.returns !~~ Path::Finder;
+		die "Finder key $name invalid" if not $method.defined or $method !~~ Constraint;
 		my $value = %options{$name};
 		my $capture = $value ~~ Capture ?? $value !! do given $method.signature.count - 1 {
 			when 1 {
