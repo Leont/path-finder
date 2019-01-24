@@ -9,5 +9,6 @@
     "author" : "Leon Timmermans",
     "depends" : [ "IO::Glob" ],
     "source-url" : "git://github.com/leont/path-iterator.git",
-    "license" : "Artistic-2.0"
+    "license" : "Artistic-2.0",
+    "test-depends": [ "File::Temp" ]
 }
