@@ -313,18 +313,6 @@ method no-lines(Mu $pattern, *%opts) is constraint(Content) {
 	}
 }
 
-my &is-unique = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>)
-	?? sub (Bool %seen, IO::Path $item) {
-		use nqp;
-		my $inode = nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_INODE);
-		my $device = nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_DEV);
-		my $key = "$inode\-$device";
-		return False if %seen{$key};
-		return %seen{$key} = True;
-		CATCH { default { return True } }
-	}
-	!! sub (Bool %seen, IO::Path $item) { return True };
-
 enum Order is export(:DEFAULT :order) < BreadthFirst PreOrder PostOrder >;
 
 my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Block);
@@ -334,7 +322,7 @@ multi method in(Path::Finder:D:
 	Bool:D :$report-symlinks = $follow-symlinks,
 	Order:D :$order = BreadthFirst,
 	Bool:D :$sorted = True,
-	Bool:D :$loop-safe = True,
+	Bool:D :$loop-safe = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>),
 	Bool:D :$relative = False,
 	Any:U :$as = IO::Path,
 	:&map = %as{$as},
@@ -342,8 +330,18 @@ multi method in(Path::Finder:D:
 ) {
 	my @queue = (@dirs || '.').map(*.IO).map: { ($^path, 0, $^path, Bool) };
 
-	my Bool $check-symlinks = !$follow-symlinks || !$report-symlinks;
 	my Bool %seen;
+	sub is-unique (IO::Path $item) {
+		use nqp;
+		my $inode = nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_INODE);
+		my $device = nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_DEV);
+		my $key = "$inode\-$device";
+		return False if %seen{$key};
+		return %seen{$key} = True;
+		CATCH { default { return True } }
+	}
+
+	my Bool $check-symlinks = !$follow-symlinks || !$report-symlinks;
 	my $seq := gather while @queue {
 		my ($item, $depth, $base, $result) = @( @queue.shift );
 
@@ -354,7 +352,7 @@ multi method in(Path::Finder:D:
 			$result = self!test($item, :$depth, :$base);
 			my $prune = $result ~~ Prune || $is-link && !$follow-symlinks;
 
-			if !$prune && $item.d && (!$loop-safe || is-unique(%seen, $item)) {
+			if !$prune && $item.d && (!$loop-safe || is-unique($item)) {
 				my @next = $item.dir.map: { ($^child, $depth + 1, $base, Bool) };
 				@next .= sort if $sorted;
 				given $order {
