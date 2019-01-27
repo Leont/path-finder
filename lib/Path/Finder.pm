@@ -175,23 +175,27 @@ method empty(Bool $value = True) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.z == $value };
 }
 
-{
-	use nqp;
-	method inode(Mu $inode) is constraint(Stat) {
-		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_INODE) ~~ $inode};
+my sub stat-check($field, $matcher) {
+	return sub ($item, *%) {
+		use nqp;
+		return nqp::stat(nqp::unbox_s(~$item), $field) ~~ $matcher;
 	}
-	method device(Mu $device) is constraint(Stat) {
-		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_DEV) ~~ $device };
-	}
-	method nlinks(Mu $nlinks) is constraint(Stat) {
-		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_NLINKS) ~~ $nlinks };
-	}
-	method uid(Mu $uid) is constraint(Stat) {
-		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_UID) ~~ $uid };
-	}
-	method gid(Mu $gid) is constraint(Stat) {
-		self.and: sub ($item, *%) { nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_GID) ~~ $gid };
-	}
+}
+
+method inode(Mu $inode) is constraint(Stat) {
+	self.and: stat-check(nqp::const::STAT_PLATFORM_INODE, $inode);
+}
+method device(Mu $device) is constraint(Stat) {
+	self.and: stat-check(nqp::const::STAT_PLATFORM_DEV, $device);
+}
+method nlinks(Mu $nlinks) is constraint(Stat) {
+	self.and: stat-check(nqp::const::STAT_PLATFORM_NLINKS, $nlinks);
+}
+method uid(Mu $uid) is constraint(Stat) {
+	self.and: stat-check(nqp::const::STAT_UID, $uid);
+}
+method gid(Mu $gid) is constraint(Stat) {
+	self.and: stat-check(nqp::const::STAT_GID, $gid);
 }
 
 method accessed(Mu $accessed) is constraint(Stat) {
