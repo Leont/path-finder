@@ -324,6 +324,8 @@ multi method in(Path::Finder:D:
 	Bool:D :$sorted = True,
 	Bool:D :$loop-safe = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>),
 	Bool:D :$relative = False,
+	Bool:D :$keep-going = True,
+	Bool:D :$quiet = False,
 	Any:U :$as = IO::Path,
 	:&map = %as{$as},
 	--> Seq:D
@@ -353,7 +355,7 @@ multi method in(Path::Finder:D:
 			my $prune = $result ~~ Prune || $is-link && !$follow-symlinks;
 
 			if !$prune && $item.d && (!$loop-safe || is-unique($item)) {
-				my @next = $item.dir.map: { ($^child, $depth + 1, $base, Bool) };
+				my @next = $item.dir.self.map: { ($^child, $depth + 1, $base, Bool) };
 				@next .= sort if $sorted;
 				given $order {
 					when BreadthFirst {
@@ -366,6 +368,13 @@ multi method in(Path::Finder:D:
 					}
 					when PreOrder {
 						@queue.prepend: @next;
+					}
+				}
+
+				CATCH {
+					when X::IO::Dir {
+						.rethrow unless $keep-going;
+						.message.note unless $quiet;
 					}
 				}
 			}
@@ -410,7 +419,7 @@ our sub finder(Path::Finder :$base = Path::Finder, *%options --> Path::Finder) i
 }
 
 our sub find(*@dirs, *%options --> Seq:D) is export(:DEFAULT :find) {
-	my %in-options = %options<follow-symlinks order sorted loop-safe relative as map>:delete:p;
+	my %in-options = %options<follow-symlinks order sorted loop-safe relative keep-going quiet as map>:delete:p;
 	return finder(|%options).in(|@dirs, |%in-options);
 }
 
@@ -491,6 +500,10 @@ current directory is used (C<".">). Valid options include:
 =item C<relative> - Return matching items relative to the search directory. Default is C<False>.
 
 =item C<sorted> - Whether entries in a directory are sorted before processing. Default is C<True>.
+
+=item C<keep-going> - Whether or not the search should continue when an error is encountered (typically and unreadable directory). Defaults to C<True>.
+
+=item C<quiet> - Whether printing non-fatal errors to C<$*ERR> is repressed. Defaults to C<False>.
 
 =item C<as> - The type of values that will be returned. Valid values are C<IO::Path> (the default) and C<Str>.
 
