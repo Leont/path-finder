@@ -197,6 +197,15 @@ method uid(Mu $uid) is constraint(Stat) {
 method gid(Mu $gid) is constraint(Stat) {
 	self.and: stat-check(nqp::const::STAT_GID, $gid);
 }
+method special(Bool $value = True) is constraint(Stat) {
+	self.and: stat-check(nqp::const::STAT_ISDEV, +$value);
+}
+method blocks(Mu $blocks) is constraint(Stat) {
+	self.and: stat-check(nqp::const::STAT_PLATFORM_BLOCKS, $blocks);
+}
+method blocksize(Mu $blocksize) is constraint(Stat) {
+	self.and: stat-check(nqp::const::STAT_PLATFORM_BLOCKSIZE, $blocksize);
+}
 
 method accessed(Mu $accessed) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.accessed ~~ $accessed };
@@ -723,6 +732,9 @@ It also supports the following integer based matching rules:
 =item nlinks
 =item uid
 =item gid
+=item special
+=item blocks
+=item blocksize
 
 For example:
 
