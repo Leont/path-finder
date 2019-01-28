@@ -827,25 +827,13 @@ depth checks.
 
 The custom rule subroutine must return one of four values:
 
-=over 4
+=item C<True> -- indicates the constraint is satisfied
 
-=item *
+=item C<False> -- indicates the constraint is not satisfied
 
-C<True> -- indicates the constraint is satisfied
+=item C<PruneExclusive> -- indicate the constraint is satisfied, and prune if it's a directory
 
-=item *
-
-C<False> -- indicates the constraint is not satisfied
-
-=item *
-
-C<PruneExclusive> -- indicate the constraint is satisfied, and prune if it's a directory
-
-=item *
-
-C<PruneInclusive> -- indicate the constraint is not satisfied, and prune if it's a directory
-
-=back
+=item C<PruneInclusive> -- indicate the constraint is not satisfied, and prune if it's a directory
 
 Here is an example. This is equivalent to the "depth" rule method with
 a depth of C<0..3>:
