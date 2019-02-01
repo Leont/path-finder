@@ -141,38 +141,38 @@ method io(Mu $path) is constraint(Name) {
 }
 
 method dangling(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { ($item.l && !$item.e) == $value };
+	self.and: sub ($item, *%) { ($item.l && !$item.e) === $value };
 }
 
 method readable(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.r == $value };
+	self.and: sub ($item, *%) { $item.r === $value };
 }
 method writable(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.w == $value };
+	self.and: sub ($item, *%) { $item.w === $value };
 }
 method executable(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.x == $value };
+	self.and: sub ($item, *%) { $item.x === $value };
 }
 method read-writable(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.rw == $value };
+	self.and: sub ($item, *%) { $item.rw === $value };
 }
 method read-write-executable(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.rwx == $value };
+	self.and: sub ($item, *%) { $item.rwx === $value };
 }
 method exists(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.e == $value };
+	self.and: sub ($item, *%) { $item.e === $value };
 }
 method file(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.f == $value };
+	self.and: sub ($item, *%) { $item.f === $value };
 }
 method directory(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.d == $value };
+	self.and: sub ($item, *%) { $item.d === $value };
 }
 method symlink(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.l == $value }
+	self.and: sub ($item, *%) { $item.l === $value }
 }
 method empty(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.z == $value };
+	self.and: sub ($item, *%) { $item.z === $value };
 }
 
 my sub stat-check($field, $matcher) {
