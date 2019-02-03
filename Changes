@@ -3,6 +3,7 @@ Revision history for Path-Finder
 {{$NEXT}}
     - Add $keep-going and $quiet arguments to in
     - Add blocks, special and blocksize methods
+    - Handle errors in content checks
 
 0.1.0  2019-01-26T21:10:25+01:00
     - Initial version

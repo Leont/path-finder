@@ -285,17 +285,21 @@ method skip-vcs(Bool $hide = True) is constraint(Skip) {
 	self.skip-dir($vcs-dirs).name($vcs-files) if $hide;
 }
 
+subset FailedToOpen of Exception where .message.contains('Failed to open file');
+
 proto method shebang(Mu $pattern, *%opts) is constraint(Content) { * }
 multi method shebang(Mu $pattern, *%opts) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		return $item.lines(|%opts)[0] ~~ $pattern;
+		CATCH { when FailedToOpen { return False } }
 	};
 }
 multi method shebang(Bool $value = True, *%opts) {
 	self.and: sub ($item, *%) {
 		return !$value unless $item.f;
 		return ?($item.lines(|%opts)[0] ~~ rx/ ^ '#!' /) === $value;
+		CATCH { when FailedToOpen { return False } }
 	};
 }
 
@@ -303,6 +307,7 @@ method contents(Mu $pattern, *%opts) is constraint(Content) {
 	self.and: sub ($item, *%) {
 		return False unless $item.f;
 		return $item.slurp(|%opts) ~~ $pattern;
+		CATCH { when FailedToOpen { return False } }
 	};
 }
 
@@ -313,6 +318,7 @@ method lines(Mu $pattern, *%opts) is constraint(Content) {
 			return True if $line ~~ $pattern;
 		}
 		return False;
+		CATCH { when FailedToOpen { return False } }
 	}
 }
 
@@ -323,6 +329,7 @@ method no-lines(Mu $pattern, *%opts) is constraint(Content) {
 			return False if $line ~~ $pattern;
 		}
 		return True;
+		CATCH { when FailedToOpen { return True } }
 	}
 }
 
