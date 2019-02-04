@@ -178,7 +178,7 @@ method empty(Bool $value = True) is constraint(Stat) {
 my sub stat-check($field, $matcher) {
 	return sub ($item, *%) {
 		use nqp;
-		return nqp::stat(nqp::unbox_s(~$item), $field) ~~ $matcher;
+		return nqp::stat(nqp::unbox_s($item.absolute), $field) ~~ $matcher;
 	}
 }
 
@@ -355,12 +355,11 @@ multi method in(Path::Finder:D:
 	my Bool %seen;
 	sub is-unique (IO::Path $item) {
 		use nqp;
-		my $inode = nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_INODE);
-		my $device = nqp::stat(nqp::unbox_s(~$item), nqp::const::STAT_PLATFORM_DEV);
+		my $inode = nqp::stat(nqp::unbox_s($item.absolute), nqp::const::STAT_PLATFORM_INODE);
+		my $device = nqp::stat(nqp::unbox_s($item.absolute), nqp::const::STAT_PLATFORM_DEV);
 		my $key = "$inode\-$device";
 		return False if %seen{$key};
 		return %seen{$key} = True;
-		CATCH { default { return True } }
 	}
 
 	my Bool $check-symlinks = !$follow-symlinks || !$report-symlinks;
