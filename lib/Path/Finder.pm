@@ -700,14 +700,42 @@ unless excluded by other rules.
 
 Most of the C<:X> style filetest are available as boolean rules:
 
-=item readable
-=item writable
-=item executable
-=item file
-=item directory
-=item symlink
-=item exists
-=item empty
+=head3 readable
+
+This checks if the entry is readable
+
+=head3 writable
+
+This checks if the entry is writable
+
+=head3 executable
+
+This checks if the entry is executable
+
+=head3 file
+
+This checks if the entry is a file
+
+=head3 directory
+
+This checks if the entry is a directory
+
+=head3 symlink
+
+This checks if the entry is a symlink
+
+=head3 special
+
+This checks if the entry is anything but a file, directory or symlink.
+
+=head3 exists
+
+This checks if the entry exists
+
+=head3 empty
+
+This checks if the entry is empty
+
 
 For example:
 
@@ -715,43 +743,85 @@ For example:
 
 Two composites are also available:
 
-=item read-writable
-=item read-write-executable
+=head3 read-writable
+
+This checks if the entry is readable and writable
+
+=head3 read-write-executable
+
+This checks if the entry is readable, writable and executable
+
+=head3 C<dangling>
+
+ $finder.dangling;
+
+The C<dangling> rule method matches dangling symlinks. It's equivalent to
+
+ $finder.symlink.exists(False)
+
 
 The timestamps methods take a single argument in a form that
-can smartmatch against an C<Instant>.
+can smartmatch an C<Instant>.
 
-=item accessed
-=item modified
-=item changed
+=head3 accessed
+
+Compares the access time
+
+=head3 modified
+
+Compares the modification time
+
+=head3 changed
+
+Compares the (inode) change time
 
 For example:
 
  # hour old
  $finder.modified(* < now - 60 * 60);
 
+
 It also supports the following integer based matching rules:
 
-=item size
-=item mode
-=item device
-=item inode
-=item nlinks
-=item uid
-=item gid
-=item special
-=item blocks
-=item blocksize
+=head3 size
+
+This compares the size of the entry
+
+=head3 mode
+
+This compares the mode of the entry
+
+=head3 device
+
+This compares the device of the entry. This may not be available everywhere.
+
+=head3 inode
+
+This compares the inode of the entry. This may not be available everywhere.
+
+=head3 nlinks
+
+This compares the link count of the entry. This may not be available everywhere.
+
+=head3 uid
+
+This compares the user identifier of the entry.
+
+=head3 gid
+
+This compares the group identifier of the entry.
+
+=head3 blocks
+
+This compares the number of blocks in the entry.
+
+=head3 blocksize
+
+This compares the blocksize of the entry.
 
 For example:
 
  $finder.size(* > 10240)
-
-=head3 C<dangling>
-
- $finder.dangling;
-
-The C<dangling> rule method matches dangling symlinks.
 
 =head2 Depth rules
 
