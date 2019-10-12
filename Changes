@@ -1,6 +1,7 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+    - Fix tests on Windows
 
 0.2.0  2019-02-04T03:36:54+01:00
     - Add $keep-going and $quiet arguments to in

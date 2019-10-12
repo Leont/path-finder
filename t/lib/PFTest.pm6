@@ -18,5 +18,6 @@ sub make_tree(@files) is export {
 }
 
 sub unixify (IO::Path $path, IO::Path $dir) is export {
-    return $path.relative($dir);
+    my $relative = $path.relative($dir);
+	return IO::Spec::Unix.catdir($*SPEC.splitdir($relative));
 }
