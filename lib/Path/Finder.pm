@@ -279,7 +279,7 @@ method skip-hidden(Bool $hide = True) is constraint(Skip) {
 		}
 	}
 }
-my $vcs-dirs = any(<.git .bzr .hg _darcs CVS RCS .svn>, |($*DISTRO.name eq 'mswin32' ?? '_svn' !! ()));
+my $vcs-dirs = any(|<.git .bzr .hg _darcs CVS RCS .svn>, |($*DISTRO.name eq 'mswin32' ?? '_svn' !! ()));
 my $vcs-files = none(rx/ '.#' $ /, rx/ ',v' $ /);
 method skip-vcs(Bool $hide = True) is constraint(Skip) {
 	self.skip-dir($vcs-dirs).name($vcs-files) if $hide;
