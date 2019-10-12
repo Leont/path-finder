@@ -11,7 +11,7 @@ use Path::Finder;
 {
 	my $td = make_tree([<data/file1.txt>]);
 
-	my $changes = $td.add('data/Changes');
+	my $changes = $td.add(<data Changes>);
 
 	'Changes'.IO.copy($changes);
 
