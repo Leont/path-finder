@@ -452,16 +452,15 @@ our sub find(*@dirs, *%options --> Seq:D) is export(:DEFAULT :find) {
 
  use Path::Finder;
 
- my $finder = Path::Finder; # match anything
- $finder = $rule.file.size(* > 10_000);    # add/chain rules
+ my $finder = Path::Finder.file.skip-vcs.ext(/pm6?/).size(* > 10_000);
 
  # iterator interface
- for $finder.in(@dirs) -> $file {
+ for $finder.in('.') -> $file {
    ...
  }
 
  # functional interface
- for find(@dirs, :file, :size(* > 10_000)) -> $file {
+ for find(:file, :skip-vcs, :ext(/pm6?/), :size(* > 10_000)) -> $file {
    ...
  }
 
@@ -472,8 +471,7 @@ user-defined set of rules. The object-oriented API is based heavily on
 perl5's C<Path::Iterator::Rule>. A C<Path::Finder> object is a
 collection of rules (match criteria) with methods to add additional criteria.
 Options that control directory traversal are given as arguments to the method
-that generates an iterator. There is also a functional interface that is often
-simpler in use, even if it allows for slightly less control.
+that generates an iterator.
 
 Here is a summary of features for comparison to other file finding modules:
 
@@ -495,7 +493,11 @@ Here is a summary of features for comparison to other file finding modules:
 
 =head1 USAGE
 
+There are two interfaces: an object oriented one, and a functional one.
+
 Path::Finder objects are immutable. All methods except C<in> return a new object combining the existing rules with the additional rules provided.
+
+When using the C<find> function, all methods described below (except C<in>) are allowed as named arguments. This is usually the easiest way to use Path::Finder, even if it allows for slightly less control. There is also a C<finder> function that returns a Path::Finder object.
 
 =head2 Matching and iteration
 
@@ -524,7 +526,7 @@ current directory is used (C<".">). Valid options include:
 
 =item C<sorted> - Whether entries in a directory are sorted before processing. Default is C<True>.
 
-=item C<keep-going> - Whether or not the search should continue when an error is encountered (typically and unreadable directory). Defaults to C<True>.
+=item C<keep-going> - Whether or not the search should continue when an error is encountered (typically an unreadable directory). Defaults to C<True>.
 
 =item C<quiet> - Whether printing non-fatal errors to C<$*ERR> is repressed. Defaults to C<False>.
 
@@ -980,5 +982,8 @@ Consider:
 
 Rule C<$f3> above will be much faster, not only because it stacks
 the file tests, but because it requires to only check a single rule.
+
+When using the C<find> function, C<Path::Finder> will try to sort the arguments
+automatically in such a way that cheap checks and skipping checks are done first.
 
 =end pod
