@@ -1,27 +1,26 @@
-[![Build Status](https://travis-ci.org/Leont/path-iterator.svg?branch=master)](https://travis-ci.org/Leont/path-iterator)
+[![Build Status](https://travis-ci.org/Leont/path-finder.svg?branch=master)](https://travis-ci.org/Leont/path-finder)
 
 SYNOPSIS
 ========
 
     use Path::Finder;
 
-    my $finder = Path::Finder; # match anything
-    $finder = $rule.file.size(* > 10_000);    # add/chain rules
+    my $finder = Path::Finder.file.skip-vcs.ext(/pm6?/).size(* > 10_000);
 
     # iterator interface
-    for $finder.in(@dirs) -> $file {
+    for $finder.in('.') -> $file {
       ...
     }
 
     # functional interface
-    for find(@dirs, :file, :size(* > 10_000)) -> $file {
+    for find(:file, :skip-vcs, :ext(/pm6?/), :size(* > 10_000)) -> $file {
       ...
     }
 
 DESCRIPTION
 ===========
 
-This module iterates over files and directories to identify ones matching a user-defined set of rules. The object-oriented API is based heavily on perl5's `Path::Iterator::Rule`. A `Path::Finder` object is a collection of rules (match criteria) with methods to add additional criteria. Options that control directory traversal are given as arguments to the method that generates an iterator. There is also a functional interface that is often simpler in use, even if it allows for slightly less control.
+This module iterates over files and directories to identify ones matching a user-defined set of rules. The object-oriented API is based heavily on perl5's `Path::Iterator::Rule`. A `Path::Finder` object is a collection of rules (match criteria) with methods to add additional criteria. Options that control directory traversal are given as arguments to the method that generates an iterator.
 
 Here is a summary of features for comparison to other file finding modules:
 
@@ -44,7 +43,11 @@ Here is a summary of features for comparison to other file finding modules:
 USAGE
 =====
 
+There are two interfaces: an object oriented one, and a functional one.
+
 Path::Finder objects are immutable. All methods except `in` return a new object combining the existing rules with the additional rules provided.
+
+When using the `find` function, all methods described below (except `in`) are allowed as named arguments. This is usually the easiest way to use Path::Finder, even if it allows for slightly less control. There is also a `finder` function that returns a Path::Finder object.
 
 Matching and iteration
 ----------------------
@@ -71,7 +74,7 @@ It takes as arguments a list of directories to search and named arguments as con
 
   * `sorted` - Whether entries in a directory are sorted before processing. Default is `True`.
 
-  * `keep-going` - Whether or not the search should continue when an error is encountered (typically and unreadable directory). Defaults to `True`.
+  * `keep-going` - Whether or not the search should continue when an error is encountered (typically an unreadable directory). Defaults to `True`.
 
   * `quiet` - Whether printing non-fatal errors to `$*ERR` is repressed. Defaults to `False`.
 
@@ -444,4 +447,6 @@ Consider:
     $f4 = Path::Finder.new.readable.writeable.executable;
 
 Rule `$f3` above will be much faster, not only because it stacks the file tests, but because it requires to only check a single rule.
+
+When using the `find` function, `Path::Finder` will try to sort the arguments automatically in such a way that cheap checks and skipping checks are done first.
 

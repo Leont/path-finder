@@ -1,6 +1,8 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+
+0.2.1  2019-10-12T16:12:51+02:00
     - Fix tests on Windows
     - Give better errors for unknown keys
 
