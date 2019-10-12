@@ -420,13 +420,17 @@ our sub finder(Path::Finder :$base = Path::Finder, *%options --> Path::Finder) i
 	my Entry @entries;
 	for %options.kv -> $name, $value {
 		my $method = $base.^lookup($name);
-		die "Finder key $name invalid" if not $method.defined or $method !~~ Constraint;
+		die "Finder key $name doesn't exist" if not $method.defined;
+		die "Finder key $name isn't a contraint" if $method !~~ Constraint;
 		my $capture = $value ~~ Capture ?? $value !! do given $method.signature.count - 1 {
 			when 1 {
 				\($value);
 			}
 			when Inf {
 				\(|@($value).map: -> $entry { $entry ~~ Hash|Pair ?? finder(|%($entry)) !! $entry });
+			}
+			default {
+				die "Finder key $name doesn't have a usable signature";
 			}
 		}
 		@entries.push: Entry.new(:$name, :$method, :$capture);
