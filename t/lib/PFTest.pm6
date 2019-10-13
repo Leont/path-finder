@@ -1,8 +1,8 @@
-unit package PCNTest;
+unit package PFTest;
 
 use File::Temp;
 
-sub make-tree(@files) is export {
+sub make-tree(@files) is export(:DEFAULT, :make-tree) {
     my $td = tempdir;
     for (@files) -> $file {
 		my $path = $td.IO.add($file);
@@ -17,7 +17,7 @@ sub make-tree(@files) is export {
     return $td.IO;
 }
 
-sub unixify (IO::Path $path, IO::Path $dir) is export {
+sub unixify(IO::Path $path, IO::Path $dir) is export(:DEFAULT, :unixify) {
     my $relative = $path.relative($dir);
 	return IO::Spec::Unix.catdir($*SPEC.splitdir($relative));
 }
