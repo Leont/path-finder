@@ -2,6 +2,7 @@ Revision history for Path-Finder
 
 {{$NEXT}}
     - Skip symlink test on Windows
+    - Unixify t/relative.t results
 
 0.2.2  2019-10-13T01:19:02+02:00
     - Fix skip-vcs for Windows

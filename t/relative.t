@@ -2,9 +2,13 @@ use v6;
 use Test;
 
 use lib 't/lib';
-use PFTest;
+use PFTest :make-tree;
 
 use Path::Finder;
+
+sub unixify($input) {
+	return IO::Spec::Unix.catdir($*SPEC.splitdir($input));
+}
 
 #--------------------------------------------------------------------------#
 
@@ -43,10 +47,10 @@ use Path::Finder;
 
 	my $rule = Path::Finder;
 
-	my @files = $rule.in($td, :order(PreOrder), :relative, :as(Str));
+	my @files = $rule.in($td, :order(PreOrder), :relative, :map({ unixify($_.IO) }));
 	is-deeply(@files, @depth_pre, "Depth first iteration (pre)");
 
-	my @files2 = $rule.in($td, :order(PostOrder), :relative, :as(Str));
+	my @files2 = $rule.in($td, :order(PostOrder), :relative, :map({ unixify($_.IO) }));
 	is-deeply(@files2, @depth_post, "Depth first iteration (post)");
 
 }
