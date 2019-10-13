@@ -22,7 +22,7 @@ my @tree = <<
   "dddd/foo.#"
 >>;
 
-my $td = make_tree(@tree);
+my $td = make-tree(@tree);
 
 {
 	my $rule     = Path::Finder.skip-vcs.file;

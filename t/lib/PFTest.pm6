@@ -2,7 +2,7 @@ unit package PCNTest;
 
 use File::Temp;
 
-sub make_tree(@files) is export {
+sub make-tree(@files) is export {
     my $td = tempdir;
     for (@files) -> $file {
 		my $path = $td.IO.add($file);

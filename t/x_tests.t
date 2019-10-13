@@ -9,7 +9,7 @@ use Path::Finder;
 #--------------------------------------------------------------------------#
 
 {
-	my $td = make_tree([< data/file1.txt >]);
+	my $td = make-tree([< data/file1.txt >]);
 
 	my $file = $td.add('data/file1.txt' );
 	# chmod a-rwx

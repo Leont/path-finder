@@ -18,7 +18,7 @@ use Path::Finder;
 	  eeee.txt
 	>;
 
-	my $td = make_tree(@tree);
+	my $td = make-tree(@tree);
 
 	my @expected = $td.dir.map(*.basename);
 

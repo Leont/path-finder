@@ -17,7 +17,7 @@ my @tree = <
   gggg.txt
 >;
 
-my $td = make_tree(@tree);
+my $td = make-tree(@tree);
 
 {
 	my $rule = Path::Finder.or( Path::Finder.name("gggg.txt"), Path::Finder.name("bbbb.txt"));

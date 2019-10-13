@@ -70,7 +70,7 @@ plan(:skip-all("Symlinks are not supported")) if $*DISTRO.name eq 'mswin32';
 	  cccc/eeee/ffff.txt
 	>;
 
-	my $td = make_tree(@tree);
+	my $td = make-tree(@tree);
 
 	symlink $td.add('cccc/eeee' ), $td.add('pppp');
 	symlink $td.add('aaaa.txt' ), $td.add('qqqq.txt');
@@ -98,7 +98,7 @@ plan(:skip-all("Symlinks are not supported")) if $*DISTRO.name eq 'mswin32';
 	  cccc/dddd.txt
 	>;
 
-	my $td = make_tree(@tree);
+	my $td = make-tree(@tree);
 
 	symlink $td.add('zzzz' ), $td.add('pppp'); # dangling symlink
 	symlink $td.add('cccc/dddd.txt' ), $td.add('qqqq.txt'); # regular symlink
@@ -141,7 +141,7 @@ plan(:skip-all("Symlinks are not supported")) if $*DISTRO.name eq 'mswin32';
 	  cccc/dddd.txt
 	>;
 
-	my $td = make_tree(@tree);
+	my $td = make-tree(@tree);
 
 	symlink $td.add('cccc'), $td.add('cccc/eeee' ); # symlink loop
 

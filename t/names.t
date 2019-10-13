@@ -14,7 +14,7 @@ my @tree = <
   t/test.t
 >;
 
-my $td = make_tree(@tree);
+my $td = make-tree(@tree);
 
 {
 	my $rule     = Path::Finder.name('Foo');

@@ -11,7 +11,7 @@ use Path::Finder;
 {
 	my ( $rule, @files );
 
-	my $td = make_tree([<file1.txt>]);
+	my $td = make-tree([<file1.txt>]);
 	$td.add('file2.txt').spurt(map { "$_\n"}, <foo bar baz> );
 	$td.add('file3.txt').spurt(<foo bar baz>);
 	$td.add('file4.txt').spurt("\x[2603]");

@@ -17,7 +17,7 @@ my @tree = <
   hhhh/iiii/jjjj/kkkk/llll/mmmm.txt
 >;
 
-my $td = make_tree(@tree);
+my $td = make-tree(@tree);
 
 {
 	my $rule  = Path::Finder.file.depth(3..*);

@@ -9,7 +9,7 @@ use Path::Finder;
 #--------------------------------------------------------------------------#
 
 {
-    my $td = make_tree(
+    my $td = make-tree(
        <
           atroot.txt
           empty/
