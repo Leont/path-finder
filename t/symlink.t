@@ -6,6 +6,8 @@ use PFTest;
 
 use Path::Finder;
 
+plan(:skip-all("Symlinks are not supported")) if $*DISTRO.name eq 'mswin32';
+
 #--------------------------------------------------------------------------#
 
 {
