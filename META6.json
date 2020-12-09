@@ -11,7 +11,7 @@
   "name" : "Path::Finder",
   "perl" : "6.*",
   "provides" : {
-    "Path::Finder" : "lib/Path/Finder.pm"
+    "Path::Finder" : "lib/Path/Finder.rakumod"
   },
   "resources" : [ ],
   "source-url" : "git://github.com/leont/path-iterator.git",
