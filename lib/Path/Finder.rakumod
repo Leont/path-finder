@@ -438,7 +438,8 @@ our sub finder(Path::Finder :$base = Path::Finder.new, *%options --> Path::Finde
 }
 
 our sub find(*@dirs, *%options --> Seq:D) is export(:DEFAULT :find) {
-	my %in-options = %options<follow-symlinks order sorted loop-safe relative keep-going quiet as map>:delete:p;
+	state @in-arguments = flat Path::Finder.^lookup('in').signature.params.map(*.named_names);
+	my %in-options = %options{@in-arguments}:delete:p;
 	return finder(|%options).in(|@dirs, |%in-options);
 }
 
