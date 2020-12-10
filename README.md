@@ -47,7 +47,7 @@ There are two interfaces: an object oriented one, and a functional one.
 
 Path::Finder objects are immutable. All methods except `in` return a new object combining the existing rules with the additional rules provided.
 
-When using the `find` function, all methods described below (except `in`) are allowed as named arguments. This is usually the easiest way to use Path::Finder, even if it allows for slightly less control. There is also a `finder` function that returns a Path::Finder object.
+When using the `find` function, all methods described below (except `in`) are allowed as named arguments, as well as all arguments to `in`. This is usually the easiest way to use Path::Finder, even if it allows for slightly less control over ordering of the constraints. There is also a `finder` function that returns a Path::Finder object.
 
 Matching and iteration
 ----------------------
@@ -205,39 +205,39 @@ File test rules
 
 Most of the `:X` style filetest are available as boolean rules:
 
-### readable
+### `readable`
 
 This checks if the entry is readable
 
-### writable
+### `writable`
 
 This checks if the entry is writable
 
-### executable
+### `executable`
 
 This checks if the entry is executable
 
-### file
+### `file`
 
 This checks if the entry is a file
 
-### directory
+### `directory`
 
 This checks if the entry is a directory
 
-### symlink
+### `symlink`
 
 This checks if the entry is a symlink
 
-### special
+### `special`
 
 This checks if the entry is anything but a file, directory or symlink.
 
-### exists
+### `exists`
 
 This checks if the entry exists
 
-### empty
+### `empty`
 
 This checks if the entry is empty
 
@@ -247,11 +247,11 @@ For example:
 
 Two composites are also available:
 
-### read-writable
+### `read-writable`
 
 This checks if the entry is readable and writable
 
-### read-write-executable
+### `read-write-executable`
 
 This checks if the entry is readable, writable and executable
 
@@ -265,15 +265,15 @@ The `dangling` rule method matches dangling symlinks. It's equivalent to
 
 The timestamps methods take a single argument in a form that can smartmatch an `Instant`.
 
-### accessed
+### `accessed`
 
 Compares the access time
 
-### modified
+### `modified`
 
 Compares the modification time
 
-### changed
+### `changed`
 
 Compares the (inode) change time
 
@@ -284,39 +284,39 @@ For example:
 
 It also supports the following integer based matching rules:
 
-### size
+### `size`
 
 This compares the size of the entry
 
-### mode
+### `mode`
 
 This compares the mode of the entry
 
-### device
+### `device`
 
 This compares the device of the entry. This may not be available everywhere.
 
-### inode
+### `inode`
 
 This compares the inode of the entry. This may not be available everywhere.
 
-### nlinks
+### `nlinks`
 
 This compares the link count of the entry. This may not be available everywhere.
 
-### uid
+### `uid`
 
 This compares the user identifier of the entry.
 
-### gid
+### `gid`
 
 This compares the group identifier of the entry.
 
-### blocks
+### `blocks`
 
 This compares the number of blocks in the entry.
 
-### blocksize
+### `blocksize`
 
 This compares the blocksize of the entry.
 

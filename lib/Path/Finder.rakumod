@@ -494,7 +494,7 @@ There are two interfaces: an object oriented one, and a functional one.
 
 Path::Finder objects are immutable. All methods except C<in> return a new object combining the existing rules with the additional rules provided.
 
-When using the C<find> function, all methods described below (except C<in>) are allowed as named arguments. This is usually the easiest way to use Path::Finder, even if it allows for slightly less control. There is also a C<finder> function that returns a Path::Finder object.
+When using the C<find> function, all methods described below (except C<in>) are allowed as named arguments, as well as all arguments to C<in>. This is usually the easiest way to use Path::Finder, even if it allows for slightly less control over ordering of the constraints. There is also a C<finder> function that returns a Path::Finder object.
 
 =head2 Matching and iteration
 
@@ -702,39 +702,39 @@ unless excluded by other rules.
 
 Most of the C<:X> style filetest are available as boolean rules:
 
-=head3 readable
+=head3 C<readable>
 
 This checks if the entry is readable
 
-=head3 writable
+=head3 C<writable>
 
 This checks if the entry is writable
 
-=head3 executable
+=head3 C<executable>
 
 This checks if the entry is executable
 
-=head3 file
+=head3 C<file>
 
 This checks if the entry is a file
 
-=head3 directory
+=head3 C<directory>
 
 This checks if the entry is a directory
 
-=head3 symlink
+=head3 C<symlink>
 
 This checks if the entry is a symlink
 
-=head3 special
+=head3 C<special>
 
 This checks if the entry is anything but a file, directory or symlink.
 
-=head3 exists
+=head3 C<exists>
 
 This checks if the entry exists
 
-=head3 empty
+=head3 C<empty>
 
 This checks if the entry is empty
 
@@ -745,11 +745,11 @@ For example:
 
 Two composites are also available:
 
-=head3 read-writable
+=head3 C<read-writable>
 
 This checks if the entry is readable and writable
 
-=head3 read-write-executable
+=head3 C<read-write-executable>
 
 This checks if the entry is readable, writable and executable
 
@@ -765,15 +765,15 @@ The C<dangling> rule method matches dangling symlinks. It's equivalent to
 The timestamps methods take a single argument in a form that
 can smartmatch an C<Instant>.
 
-=head3 accessed
+=head3 C<accessed>
 
 Compares the access time
 
-=head3 modified
+=head3 C<modified>
 
 Compares the modification time
 
-=head3 changed
+=head3 C<changed>
 
 Compares the (inode) change time
 
@@ -785,39 +785,39 @@ For example:
 
 It also supports the following integer based matching rules:
 
-=head3 size
+=head3 C<size>
 
 This compares the size of the entry
 
-=head3 mode
+=head3 C<mode>
 
 This compares the mode of the entry
 
-=head3 device
+=head3 C<device>
 
 This compares the device of the entry. This may not be available everywhere.
 
-=head3 inode
+=head3 C<inode>
 
 This compares the inode of the entry. This may not be available everywhere.
 
-=head3 nlinks
+=head3 C<nlinks>
 
 This compares the link count of the entry. This may not be available everywhere.
 
-=head3 uid
+=head3 C<uid>
 
 This compares the user identifier of the entry.
 
-=head3 gid
+=head3 C<gid>
 
 This compares the group identifier of the entry.
 
-=head3 blocks
+=head3 C<blocks>
 
 This compares the number of blocks in the entry.
 
-=head3 blocksize
+=head3 C<blocksize>
 
 This compares the blocksize of the entry.
 
