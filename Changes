@@ -2,6 +2,7 @@ Revision history for Path-Finder
 
 {{$NEXT}}
     - Deprecate calling in() on type object
+    - Rename Order to Ordering
 
 0.2.3  2019-10-13T23:11:37+02:00
     - Skip symlink test on Windows

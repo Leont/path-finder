@@ -333,14 +333,14 @@ method no-lines(Mu $pattern, *%opts) is constraint(Content) {
 	}
 }
 
-enum Order is export(:DEFAULT :order) < BreadthFirst PreOrder PostOrder >;
+enum Ordering is export(:DEFAULT :order) < BreadthFirst PreOrder PostOrder >;
 
 my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Block);
 method in(Path::Finder:D:
 	*@dirs,
 	Bool:D :$follow-symlinks = True,
 	Bool:D :$report-symlinks = $follow-symlinks,
-	Order:D :$order = BreadthFirst,
+	Ordering:D :$order = BreadthFirst,
 	Bool:D :$sorted = True,
 	Bool:D :$loop-safe = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>),
 	Bool:D :$relative = False,
