@@ -112,6 +112,8 @@ my multi globulize(Any $name) {
 	return $name;
 }
 
+my subset Slash of Str where '/';
+
 my grammar Globbing {
 	rule TOP {
 		^ <term>+ $
@@ -126,6 +128,10 @@ my grammar Globbing {
 	token term:sym<?> {
 		<sym>
 		{ make /<-[/]>/ }
+	}
+	token term:sym</> {
+		<sym>+
+		{ make '/' }
 	}
 
 	proto token class { * }
@@ -164,7 +170,7 @@ my grammar Globbing {
 
 	proto token char { * }
 	token char:simple {
-		<-[*?[\]{}\\]>+
+		<-[*?[\]{}\\/]>+
 		{ make ~$/ }
 	}
 	token char:escape {
@@ -177,13 +183,16 @@ my grammar Globbing {
 	}
 }
 
-my multi join-regexps(@elements) {
+my sub join-regexps(@elements) {
 	return all(@elements) ~~ Str ?? @elements.join !! (/^/, |@elements, /$/).reduce({ /$^a$^b/ });
 }
 
+my sub parse-glob(Str $pattern) {
+	my $match = Globbing.new.parse($pattern);
+	return $match ?? $match.made !! die "Invalid glob expression";
+}
 my multi globulize(Str $name) {
-	my $match = Globbing.new.parse($name);
-	return $match ?? join-regexps($match.made) !! die "Invalid glob expression";
+	return join-regexps(parse-glob($name));
 }
 
 method name(Mu $name) is constraint(Name) {
@@ -195,14 +204,47 @@ method ext(Mu $ext) is constraint(Name) {
 	self.and: sub ($item, *%) { $item.extension ~~ $ext };
 }
 
-method path(Mu $path) is constraint(Name) {
+my sub globulize-elements(Str $path) {
+	my @list = parse-glob($path);
+	my $taken = 0;
+	my @split = gather {
+		for @list.grep(Slash, :k) -> $index {
+			take @list[$taken ..^ $index];
+			$taken = $index + 1;
+		}
+		take @list[$taken .. *] if @list - $taken;
+	}
+	return @split.map: { join-regexps($^elem) };
+}
+
+proto method path(Mu $path) is constraint(Depth) { * }
+multi method path(Mu $path) {
 	my $matcher = globulize($path);
 	self.and: sub ($item, *%) { ~$item ~~ $matcher };
 }
+multi method path(Str $path) {
+	my @matchers = globulize-elements($path);
+	self.and: sub ($item, :$base, :$depth) {
+		my @base = $base.Str.split($base.SPEC.dir-sep).grep(* ne $base.SPEC.curdir);
+		return PruneInclusive if not all(@base Z~~ @matchers);
+		return False if $depth + @base == 0;
+		return PruneInclusive if $item.basename !~~ @matchers[$depth + @base - 1];
+		return $depth + @base == @matchers ?? PruneExclusive !! PruneInclusive;
+	};
+}
 
-method relpath(Mu $path ) is constraint(Name) {
+proto method relpath(Mu $path) is constraint(Depth) { * }
+multi method relpath(Mu $path) {
 	my $matcher = globulize($path);
 	self.and: sub ($item, :$base, *%) { $item.relative($base) ~~ $matcher };
+}
+multi method relpath(Str $path) {
+	my @matchers = globulize-elements($path);
+	self.and: sub ($item, :$depth, *%) {
+		return False if $depth == 0;
+		return PruneInclusive if $item.basename !~~ @matchers[$depth - 1];
+		return $depth == @matchers ?? PruneExclusive !! PruneInclusive;
+	};
 }
 
 method io(Mu $path) is constraint(Name) {
