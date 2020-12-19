@@ -2,8 +2,6 @@ use v6;
 
 unit class Path::Finder:ver<0.2.3>;
 
-use IO::Glob;
-
 has Callable:D @!rules;
 our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
 
@@ -110,11 +108,82 @@ method !test(IO::Path $item, *%args) {
 	return $ret;
 }
 
-my multi sub globulize(Any $name) {
+my multi globulize(Any $name) {
 	return $name;
 }
-my multi sub globulize(Str $name) {
-	return glob($name);
+
+my grammar Globbing {
+	rule TOP {
+		^ <term>+ $
+		{ make $/.values».made }
+	}
+
+	proto token term {*}
+	token term:sym<*> {
+		<sym>
+		{ make /<-[/]>*?/ }
+	}
+	token term:sym<?> {
+		<sym>
+		{ make /<-[/]>/ }
+	}
+
+	proto token class { * }
+	token class:simple {
+		<-[ \] ]>
+		{ make ~$/ }
+	}
+	token class:escape {
+		"\\" $<escape-sym>=[<[!\-\]]>]
+		{ make ~$<escape-sym> }
+	}
+	token class:range {
+		$<begin>=[<-[ \] - ]>]
+		'-'
+		$<end>=[<-[ \] - ]>]
+		{ make (~$<begin>)..(~$<end>) }
+	}
+	token term:character-class {
+		'[' ~ ']' [ $<not>=["!"?] <class>+ ]
+		{
+			my @class = @<class>.map(*.made).flat;
+			make ~$<not> ?? /<!before @class> ./ !! /@class/;
+		}
+	}
+
+	token list-item {
+		<-[ , \} ]>*
+	}
+	token term:alternatives {
+		'{' ~ '}' [ <list-item>+ % ',' ]
+		{
+			my @list = @<list-item>».Str;
+			make /@list/;
+		}
+	}
+
+	proto token char { * }
+	token char:simple {
+		<-[*?[\]{}\\]>+
+		{ make ~$/ }
+	}
+	token char:escape {
+		"\\" $<escape-sym>=[<[*?[\]{}\\]>]
+		{ make ~$<escape-sym> }
+	}
+	token term:chars {
+		<char>+
+		{ make @<char>».made.join }
+	}
+}
+
+my multi join-regexps(@elements) {
+	return all(@elements) ~~ Str ?? @elements.join !! (/^/, |@elements, /$/).reduce({ /$^a$^b/ });
+}
+
+my multi globulize(Str $name) {
+	my $match = Globbing.new.parse($name);
+	return $match ?? join-regexps($match.made) !! die "Invalid glob expression";
 }
 
 method name(Mu $name) is constraint(Name) {
@@ -632,7 +701,7 @@ C<readable>).
 The C<name> method takes a pattern and creates a rule that is true
 if it matches the B<basename> of the file or directory path.
 Patterns may be anything that can smartmatch a string. If it's a string
-it will be interpreted as a L<glob|IO::Glob> pattern.
+it will be interpreted as a glob pattern.
 
 =head3 C<path>
 
@@ -642,7 +711,7 @@ it will be interpreted as a L<glob|IO::Glob> pattern.
 The C<path> method takes a pattern and creates a rule that is true
 if it matches the path of the file or directory.
 Patterns may be anything that can smartmatch a string. If it's a string
-it will be interpreted as a L<glob|IO::Glob> pattern.
+it will be interpreted as a glob pattern.
 
 =head3 C<relpath>
 
@@ -655,7 +724,7 @@ find(:relpath(any(rx/foo/, "bar.*"))
 The C<relpath> method takes a pattern and creates a rule that is true
 if it matches the path of the file or directory relative to its basedir.
 Patterns may be anything that can smartmatch a string. If it's a string
-it will be interpreted as a L<glob|IO::Glob> pattern.
+it will be interpreted as a glob pattern.
 
 =head3 C<io>
 

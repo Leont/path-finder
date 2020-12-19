@@ -153,14 +153,14 @@ File name rules
     $finder.name("foo.txt");
     find(:name<foo.txt>);
 
-The `name` method takes a pattern and creates a rule that is true if it matches the **basename** of the file or directory path. Patterns may be anything that can smartmatch a string. If it's a string it will be interpreted as a [glob](IO::Glob) pattern.
+The `name` method takes a pattern and creates a rule that is true if it matches the **basename** of the file or directory path. Patterns may be anything that can smartmatch a string. If it's a string it will be interpreted as a glob pattern.
 
 ### `path`
 
     $finder.path( "foo/*.txt" );
     find(:path<foo/*.txt>);
 
-The `path` method takes a pattern and creates a rule that is true if it matches the path of the file or directory. Patterns may be anything that can smartmatch a string. If it's a string it will be interpreted as a [glob](IO::Glob) pattern.
+The `path` method takes a pattern and creates a rule that is true if it matches the path of the file or directory. Patterns may be anything that can smartmatch a string. If it's a string it will be interpreted as a glob pattern.
 
 ### `relpath`
 
@@ -168,7 +168,7 @@ $finder.relpath( "foo/bar.txt" ); find(:relpath<foo/bar.txt>);
 
 $finder.relpath( any(rx/foo/, "bar.*")); find(:relpath(any(rx/foo/, "bar.*"))
 
-The `relpath` method takes a pattern and creates a rule that is true if it matches the path of the file or directory relative to its basedir. Patterns may be anything that can smartmatch a string. If it's a string it will be interpreted as a [glob](IO::Glob) pattern.
+The `relpath` method takes a pattern and creates a rule that is true if it matches the path of the file or directory relative to its basedir. Patterns may be anything that can smartmatch a string. If it's a string it will be interpreted as a glob pattern.
 
 ### `io`
 

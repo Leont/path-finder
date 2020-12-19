@@ -3,9 +3,7 @@
     "Leon Timmermans"
   ],
   "build-depends" : [ ],
-  "depends" : [
-    "IO::Glob"
-  ],
+  "depends" : [ ],
   "description" : "Iterative, recursive file finder for Perl 6",
   "license" : "Artistic-2.0",
   "name" : "Path::Finder",
