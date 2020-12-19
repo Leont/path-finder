@@ -510,7 +510,7 @@ method in(Path::Finder:D:
 			}
 		}
 
-		take $relative ?? $item.relative($base).IO !! $item if $result;
+		take $relative ?? IO::Path.new($item.relative($base), :CWD($base.absolute)) !! $item if $result;
 	}
 	return &map ?? $seq.map(&map) !! $seq;
 }
