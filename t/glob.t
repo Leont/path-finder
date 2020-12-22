@@ -34,6 +34,8 @@ sub glob($dir, |args) {
 	is-deeply(glob($dir, :relpath('*/*/foo.md')), <a/a/foo.md c/c/foo.md>, ":relpath('*/*/foo.md')");
 	is-deeply(glob($dir, :relpath('*/*/bar.md')), <a/a/bar.md b/a/bar.md>, ":relpath('*/*/bar.md')");
 	is-deeply(glob($dir, :relpath('*/*')), <a/a a/c b/a c/c>, ":relpath('*/*')");
+
+	is-deeply(glob($dir, :relpath('**/foo.md')), <a/a/foo.md c/c/foo.md>, ":relpath('**/foo.md')");
 }
 
 done-testing;
