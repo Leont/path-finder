@@ -45,7 +45,7 @@ sub unixify($input) {
 
 	my $td = make-tree(@tree);
 
-	my $rule = Path::Finder;
+	my $rule = Path::Finder.new;
 
 	my @files = $rule.in($td, :order(PreOrder), :relative, :map({ unixify($_.IO) }));
 	is-deeply(@files, @depth_pre, "Depth first iteration (pre)");

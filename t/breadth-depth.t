@@ -52,7 +52,7 @@ use Path::Finder;
 
 	my $td = make-tree(@tree);
 
-	my $rule = Path::Finder;
+	my $rule = Path::Finder.new;
 
 	my @files = $rule.in($td, :order(BreadthFirst)).map: { unixify($_, $td) };
 	is-deeply(@files, @breadth, "Breadth first iteration" );

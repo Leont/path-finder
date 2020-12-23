@@ -336,7 +336,7 @@ method no-lines(Mu $pattern, *%opts) is constraint(Content) {
 enum Order is export(:DEFAULT :order) < BreadthFirst PreOrder PostOrder >;
 
 my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Block);
-multi method in(Path::Finder:D:
+method in(Path::Finder:D:
 	*@dirs,
 	Bool:D :$follow-symlinks = True,
 	Bool:D :$report-symlinks = $follow-symlinks,
@@ -404,11 +404,7 @@ multi method in(Path::Finder:D:
 	return &map ?? $seq.map(&map) !! $seq;
 }
 
-multi method in(Path::Finder:U: |args --> Seq:D){
-	return self.new.in(|args);
-}
-
-our sub finder(Path::Finder :$base = Path::Finder, *%options --> Path::Finder) is export(:find) {
+our sub finder(Path::Finder :$base = Path::Finder.new, *%options --> Path::Finder) is export(:find) {
 	class Entry {
 		has $.name;
 		has $.method handles <precedence>;

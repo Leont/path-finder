@@ -75,7 +75,7 @@ plan(:skip-all("Symlinks are not supported")) if $*DISTRO.name eq 'mswin32';
 	symlink $td.add('cccc/eeee' ), $td.add('pppp');
 	symlink $td.add('aaaa.txt' ), $td.add('qqqq.txt');
 
-	my $rule = Path::Finder;
+	my $rule = Path::Finder.new;
 
 	my @got = $rule.in($td).map: { unixify( $_, $td ) };
 	is-deeply(@got, @follow, "Follow symlinks" );
@@ -154,7 +154,7 @@ plan(:skip-all("Symlinks are not supported")) if $*DISTRO.name eq 'mswin32';
 	  cccc/eeee
 	>;
 
-	my $rule = Path::Finder;
+	my $rule = Path::Finder.new;
 	my @got = $rule.in($td).map: { unixify( $_, $td ) };
 	is-deeply( @got, @expected, "Symlink loop" );
 }
