@@ -1,6 +1,8 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+
+0.3.0  2020-12-23T23:45:06+01:00
     - Deprecate calling in() on type object
     - Rename Order to Ordering
 
