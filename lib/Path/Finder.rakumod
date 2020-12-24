@@ -112,7 +112,8 @@ my multi globulize(Any $name) {
 	return $name;
 }
 
-my subset Slash of Str where '/';
+constant $slash = $*DISTRO.is-win ?? /<[\\\/]>/ !! '/';
+my subset Slash where * === $slash;
 constant $starstar = /.*/;
 my subset StarStar of Regex where * === $starstar;
 
@@ -137,7 +138,7 @@ my grammar Globbing {
 	}
 	token term:sym</> {
 		<sym>+
-		{ make '/' }
+		{ make $slash }
 	}
 
 	proto token class { * }
