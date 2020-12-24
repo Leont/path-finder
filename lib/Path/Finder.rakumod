@@ -170,7 +170,7 @@ my grammar Globbing {
 	token term:alternatives {
 		'{' ~ '}' [ <list-item>+ % ',' ]
 		{
-			my @list = @<list-item>».Str;
+			my @list = ~«@<list-item>;
 			make /@list/;
 		}
 	}
