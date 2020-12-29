@@ -249,7 +249,7 @@ multi method path(Str $path) {
 		return PruneInclusive if not all(@base Z~~ @matchers);
 		return False if $depth + @base == 0;
 		return $item.basename ~~ @matchers[$depth + @base - 1] ?? False !! PruneInclusive if $depth + @base < @matchers;
-		my Bool() $success = ~$item ~~ $matcher;
+		my $success = so ~$item ~~ $matcher;
 		return $depth == $max-depth ?? Prune(+$success) !! $success;
 	};
 }
@@ -265,7 +265,7 @@ multi method relpath(Str $path) {
 		return False if $depth == 0;
 		return PruneInclusive if $item.basename !~~ @matchers[$depth - 1];
 		return $item.basename ~~ @matchers[$depth - 1] ?? False !! PruneInclusive if $depth < @matchers;
-		my Bool() $success = $item.relative($base) ~~ $matcher;
+		my $success = so $item.relative($base) ~~ $matcher;
 		return $depth == $max-depth ?? Prune(+$success) !! $success;
 	};
 }
