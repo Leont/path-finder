@@ -1,6 +1,8 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+
+0.3.2  2020-12-29T14:36:39+01:00
     - Restore 2020.10 compatibility.
 
 0.3.1  2020-12-27T22:40:01+01:00
