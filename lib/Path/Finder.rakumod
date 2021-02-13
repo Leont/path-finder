@@ -557,7 +557,7 @@ our sub finder(Path::Finder :$base = Path::Finder.new, *%options --> Path::Finde
 				\($value);
 			}
 			when Inf {
-				\(|@($value).map: -> $entry { $entry ~~ Hash|Pair ?? finder(|%($entry)) !! $entry });
+				\($value ~~ Hash|Pair ?? finder(|%($value)) !! $value );
 			}
 			default {
 				die "Finder key $name doesn't have a usable signature";
