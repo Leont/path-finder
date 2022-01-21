@@ -1,6 +1,8 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+
+0.4.0  2022-01-21T23:53:33+01:00
     - Make PreOrder the default order
     - No longer make current directory default
     - Correctly convert hash arguments to finder to a new finder
