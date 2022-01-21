@@ -474,7 +474,7 @@ method in(Path::Finder:D:
 	*@dirs,
 	Bool:D :$follow-symlinks = True,
 	Bool:D :$report-symlinks = $follow-symlinks,
-	Ordering:D :$order = BreadthFirst,
+	Ordering:D :$order = PreOrder,
 	Bool:D :$sorted = True,
 	Bool:D :$loop-safe = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>),
 	Bool:D :$relative = False,
@@ -645,7 +645,7 @@ It takes as arguments a list of directories to search and named arguments as
 control options. If no search directories are provided, the
 current directory is used (C<".">). Valid options include:
 
-=item C<order> -- Controls order of results. Valid values are C<BreadthFirst> (breadth-first search), C<PreOrder> (pre-order, depth-first search), C<PostOrder> (post-order, depth-first search). The default is C<BreadthFirst>.
+=item C<order> -- Controls order of results. Valid values are C<BreadthFirst> (breadth-first search), C<PreOrder> (pre-order, depth-first search), C<PostOrder> (post-order, depth-first search). The default is C<PreOrder>.
 
 =item C<follow-symlinks> - Follow directory symlinks when true. Default is C<True>.
 

@@ -41,8 +41,8 @@ my $td = make-tree(@tree);
 		  aaaa.txt
 		  bbbb.txt
 		  cccc
-		  gggg.txt
 		  cccc/dddd.txt
+		  gggg.txt
 	>;
 	my @got = $rule.in($td).map: { unixify( $_, $td ) };
 	is-deeply( @got, @expected, "skip() with custom rule" );
@@ -55,8 +55,8 @@ my $td = make-tree(@tree);
 		  aaaa.txt
 		  bbbb.txt
 		  cccc
-		  gggg.txt
 		  cccc/dddd.txt
+		  gggg.txt
 	>;
 	my @got = $rule.in($td).map: { unixify( $_, $td ) };
 	is-deeply( @got, @expected, "skip() with crazy custom rule" );
@@ -86,8 +86,8 @@ my $td = make-tree(@tree);
 		  aaaa.txt
 		  bbbb.txt
 		  cccc
-		  gggg.txt
 		  cccc/dddd.txt
+		  gggg.txt
 	>;
 	my @got = $rule.in($td).map: { unixify( $_, $td ) };
 	is-deeply( @got, @expected, "none with references" );

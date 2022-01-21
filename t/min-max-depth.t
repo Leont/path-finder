@@ -34,8 +34,8 @@ my $td = make-tree(@tree);
 	my @expected = <
 	  aaaa.txt
 	  bbbb.txt
-	  gggg.txt
 	  cccc/dddd.txt
+	  gggg.txt
 	>;
 	my @got = $rule.in($td).map: { unixify( $_, $td ) };
 	is-deeply(@got, @expected, "max_depth(2) test" );

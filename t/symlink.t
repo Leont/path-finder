@@ -4,7 +4,7 @@ use Test;
 use lib 't/lib';
 use PFTest;
 
-use Path::Finder;
+use Path::Finder :order;
 
 plan(:skip-all("Symlinks are not supported")) if $*DISTRO.name eq 'mswin32';
 
@@ -77,16 +77,16 @@ plan(:skip-all("Symlinks are not supported")) if $*DISTRO.name eq 'mswin32';
 
 	my $rule = Path::Finder.new;
 
-	my @got = $rule.in($td).map: { unixify( $_, $td ) };
+	my @got = $rule.in($td, :order(BreadthFirst)).map: { unixify( $_, $td ) };
 	is-deeply(@got, @follow, "Follow symlinks" );
 
-	@got = $rule.in($td, :!loop-safe).map: { unixify( $_, $td ) };
+	@got = $rule.in($td, :!loop-safe, :order(BreadthFirst)).map: { unixify( $_, $td ) };
 	is-deeply(@got, @not_loop_safe, "Follow symlinks, but loop_safe = 0" );
 
-	@got = $rule.in($td, :!follow-symlinks, :report-symlinks).map: { unixify( $_, $td ) };
+	@got = $rule.in($td, :!follow-symlinks, :report-symlinks, :order(BreadthFirst)).map: { unixify( $_, $td ) };
 	is-deeply(@got, @nofollow_report, "Don't follow symlinks, but report them" );
 
-	@got = $rule.in($td, :!follow-symlinks, :!report-symlinks).map: { unixify( $_, $td ) };
+	@got = $rule.in($td, :!follow-symlinks, :!report-symlinks, :order(BreadthFirst)).map: { unixify( $_, $td ) };
 	is-deeply(@got, @nofollow_noreport, "Don't follow or report symlinks" );
 
 }
@@ -125,7 +125,7 @@ plan(:skip-all("Symlinks are not supported")) if $*DISTRO.name eq 'mswin32';
 	is-deeply(@got, @dangling, "Dangling symlinks" );
 
 	$rule = Path::Finder.dangling(False);
-	@got = $rule.in($td).map: { unixify( $_, $td ) };
+	@got = $rule.in($td, :order(BreadthFirst)).map: { unixify( $_, $td ) };
 	is-deeply(@got, @not_dangling, "No dangling symlinks" );
 
 	$rule = Path::Finder.symlink.dangling(False);
