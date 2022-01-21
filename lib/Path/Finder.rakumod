@@ -484,7 +484,7 @@ method in(Path::Finder:D:
 	:&map = %as{$as},
 	--> Seq:D
 ) {
-	my @queue = (@dirs || '.').map(*.IO).map: { ($^path, 0, $^path, Bool) };
+	my @queue = @dirs.map(*.IO).map: { ($^path, 0, $^path, Bool) };
 
 	my Bool %seen;
 	sub is-unique (IO::Path $item) {
@@ -642,8 +642,7 @@ Creates a sequence of results. This sequence is "lazy" -- results are not
 pre-computed.
 
 It takes as arguments a list of directories to search and named arguments as
-control options. If no search directories are provided, the
-current directory is used (C<".">). Valid options include:
+control options. Valid options include:
 
 =item C<order> -- Controls order of results. Valid values are C<BreadthFirst> (breadth-first search), C<PreOrder> (pre-order, depth-first search), C<PostOrder> (post-order, depth-first search). The default is C<PreOrder>.
 

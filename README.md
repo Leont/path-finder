@@ -60,9 +60,9 @@ Matching and iteration
 
 Creates a sequence of results. This sequence is "lazy" -- results are not pre-computed.
 
-It takes as arguments a list of directories to search and named arguments as control options. If no search directories are provided, the current directory is used (`"."`). Valid options include:
+It takes as arguments a list of directories to search and named arguments as control options. Valid options include:
 
-  * `order` -- Controls order of results. Valid values are `BreadthFirst` (breadth-first search), `PreOrder` (pre-order, depth-first search), `PostOrder` (post-order, depth-first search). The default is `BreadthFirst`.
+  * `order` -- Controls order of results. Valid values are `BreadthFirst` (breadth-first search), `PreOrder` (pre-order, depth-first search), `PostOrder` (post-order, depth-first search). The default is `PreOrder`.
 
   * `follow-symlinks` - Follow directory symlinks when true. Default is `True`.
 

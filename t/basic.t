@@ -30,7 +30,7 @@ use Path::Finder;
 
 	chdir $td;
 
-    @files = $rule.in(:as(Str));
+    @files = $rule.in('.', :as(Str));
     is( +@files, 4, "All files and dirs w/ cwd" );
 
     $rule = $rule.skip-dir('data');
