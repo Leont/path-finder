@@ -1,6 +1,6 @@
 use v6;
 
-unit class Path::Finder:ver<0.4.0>;
+unit class Path::Finder:ver<0.4.0> does Callable;
 
 has Callable:D @!rules;
 our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
@@ -538,6 +538,10 @@ method in(Path::Finder:D:
 	return &map ?? $seq.map(&map) !! $seq;
 }
 
+method CALL-ME(|capture) {
+	return self.in(|capture);
+}
+
 our sub finder(Path::Finder :$base = Path::Finder.new, *%options --> Path::Finder) is export(:find) {
 	class Entry {
 		has $.name;
@@ -632,9 +636,9 @@ When using the C<find> function, all methods described below (except C<in>) are 
 
 =head2 Matching and iteration
 
-=head3 C<in>
+=head3 C<CALL-ME> / C<in>
 
- for $finder.in(@dirs, |%options) -> $file {
+ for $finder(@dirs, |%options) -> $file {
    ...
  }
 

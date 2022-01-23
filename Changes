@@ -1,6 +1,7 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+    - Make Path::Finder Callable
 
 0.4.0  2022-01-21T23:53:33+01:00
     - Make PreOrder the default order
