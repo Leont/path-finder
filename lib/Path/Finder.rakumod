@@ -469,6 +469,8 @@ method no-lines(Mu $pattern, *%opts) is constraint(Content) {
 
 enum Ordering is export(:DEFAULT :order) < BreadthFirst PreOrder PostOrder >;
 
+constant $has-loopsafe = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>);
+
 my %as{Any:U} = ((Str) => { ~$_ }, (IO::Path) => Block);
 method in(Path::Finder:D:
 	*@dirs,
@@ -476,7 +478,7 @@ method in(Path::Finder:D:
 	Bool:D :$report-symlinks = $follow-symlinks,
 	Ordering:D :$order = PreOrder,
 	Bool:D :$sorted = True,
-	Bool:D :$loop-safe = $*DISTRO.name ne any(<MSWin32 os2 dos NetWare symbian>),
+	Bool:D :$loop-safe = $has-loopsafe,
 	Bool:D :$relative = False,
 	Bool:D :$keep-going = True,
 	Bool:D :$quiet = False,
