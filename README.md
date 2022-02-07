@@ -52,9 +52,9 @@ When using the `find` function, all methods described below (except `in`) are al
 Matching and iteration
 ----------------------
 
-### `in`
+### `CALL-ME` / `in`
 
-    for $finder.in(@dirs, |%options) -> $file {
+    for $finder(@dirs, |%options) -> $file {
       ...
     }
 
