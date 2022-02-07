@@ -572,9 +572,7 @@ our sub finder(Path::Finder :$base = Path::Finder.new, *%options --> Path::Finde
 		@entries.push: Entry.new(:$name, :$method, :$capture);
 	}
 	my @keys = @entries.sort(*.precedence);
-	return ($base, |@keys).reduce: -> $object, $entry {
-		$entry.call-with($object);
-	}
+	return ($base, |@keys).reduce: { $^entry.call-with($^base) }
 }
 
 our sub find(*@dirs, *%options --> Seq:D) is export(:DEFAULT :find) {
