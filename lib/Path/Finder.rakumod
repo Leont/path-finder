@@ -340,6 +340,9 @@ method blocks(Mu $blocks) is constraint(Stat) {
 method blocksize(Mu $blocksize) is constraint(Stat) {
 	self.and: stat-check(nqp::const::STAT_PLATFORM_BLOCKSIZE, $blocksize);
 }
+method device-type(Mu $devtype) is constraint(Stat) {
+	self.and: stat-check(nqp::const::STAT_PLATFORM_DEVTYPE, $devtype);
+}
 
 method accessed(Mu $accessed) is constraint(Stat) {
 	self.and: sub ($item, *%) { $item.accessed ~~ $accessed };
@@ -933,6 +936,10 @@ This compares the mode of the entry
 =head3 C<device>
 
 This compares the device of the entry. This may not be available everywhere.
+
+=head3 C<device-type>
+
+This compares the device ID of the entry (when its a special file). This may not be available everywhere.
 
 =head3 C<inode>
 
