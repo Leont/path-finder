@@ -164,9 +164,11 @@ The `path` method takes a pattern and creates a rule that is true if it matches 
 
 ### `relpath`
 
-$finder.relpath( "foo/bar.txt" ); find(:relpath<foo/bar.txt>);
+    $finder.relpath( "foo/bar.txt" );
+    find(:relpath<foo/bar.txt>);
 
-$finder.relpath( any(rx/foo/, "bar.*")); find(:relpath(any(rx/foo/, "bar.*"))
+    $finder.relpath( any(rx/foo/, "bar.*"));
+    find(:relpath(any(rx/foo/, "bar.*"))
 
 The `relpath` method takes a pattern and creates a rule that is true if it matches the path of the file or directory relative to its basedir. Patterns may be anything that can smartmatch a string. If it's a string it will be interpreted as a glob pattern.
 
@@ -352,7 +354,7 @@ The expressions are applied to the file's contents as a single string. For large
 
 Files are assumed to be encoded in UTF-8, but alternative encodings can be passed as a named argument:
 
-$finder.contents(rx/BEGIN .* END/xs, :enc<latin1>);
+    $finder.contents(rx/BEGIN .* END/xs, :enc<latin1>);
 
 ### `lines`
 

@@ -786,11 +786,11 @@ it will be interpreted as a glob pattern.
 
 =head3 C<relpath>
 
-$finder.relpath( "foo/bar.txt" );
-find(:relpath<foo/bar.txt>);
+ $finder.relpath( "foo/bar.txt" );
+ find(:relpath<foo/bar.txt>);
 
-$finder.relpath( any(rx/foo/, "bar.*"));
-find(:relpath(any(rx/foo/, "bar.*"))
+ $finder.relpath( any(rx/foo/, "bar.*"));
+ find(:relpath(any(rx/foo/, "bar.*"))
 
 The C<relpath> method takes a pattern and creates a rule that is true
 if it matches the path of the file or directory relative to its basedir.
@@ -1003,7 +1003,7 @@ large files, this is likely to take significant time and memory.
 Files are assumed to be encoded in UTF-8, but alternative encodings can
 be passed as a named argument:
 
-$finder.contents(rx/BEGIN .* END/xs, :enc<latin1>);
+ $finder.contents(rx/BEGIN .* END/xs, :enc<latin1>);
 
 =head3 C<lines>
 
