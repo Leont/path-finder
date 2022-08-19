@@ -1,6 +1,8 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+
+0.4.2  2022-08-19T13:12:52+02:00
     - Add device-type method
 
 0.4.1  2022-02-07T04:40:38+01:00

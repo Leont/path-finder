@@ -298,6 +298,10 @@ This compares the mode of the entry
 
 This compares the device of the entry. This may not be available everywhere.
 
+### `device-type`
+
+This compares the device ID of the entry (when its a special file). This may not be available everywhere.
+
 ### `inode`
 
 This compares the inode of the entry. This may not be available everywhere.
