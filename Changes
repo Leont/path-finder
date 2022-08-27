@@ -1,6 +1,8 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+
+0.4.3  2022-08-27T17:39:40+02:00
     - Add an $invert named argument to in/find
 
 0.4.2  2022-08-19T13:12:52+02:00

@@ -1,6 +1,6 @@
 use v6;
 
-unit class Path::Finder:ver<0.4.2> does Callable;
+unit class Path::Finder:ver<0.4.3> does Callable;
 
 has Callable:D @!rules;
 our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
@@ -485,7 +485,7 @@ method in(Path::Finder:D:
 	Bool:D :$relative = False,
 	Bool:D :$keep-going = True,
 	Bool:D :$quiet = False,
-	Bool:D :$invert = False;
+	Bool:D :$invert = False,
 	Any:U :$as = IO::Path,
 	:&map = %as{$as},
 	--> Seq:D

@@ -78,6 +78,8 @@ It takes as arguments a list of directories to search and named arguments as con
 
   * `quiet` - Whether printing non-fatal errors to `$*ERR` is repressed. Defaults to `False`.
 
+  * `invert` - This will invert which files are matched and which files are not
+
   * `as` - The type of values that will be returned. Valid values are `IO::Path` (the default) and `Str`.
 
 Filesystem loops might exist from either hard or soft links. The `loop-safe` option prevents infinite loops, but adds some overhead by making `stat` calls. Because directories are visited only once when `loop-safe` is true, matches could come from a symlinked directory before the real directory depending on the search order.
