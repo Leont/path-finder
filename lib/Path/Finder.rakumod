@@ -485,6 +485,7 @@ method in(Path::Finder:D:
 	Bool:D :$relative = False,
 	Bool:D :$keep-going = True,
 	Bool:D :$quiet = False,
+	Bool:D :$invert = False;
 	Any:U :$as = IO::Path,
 	:&map = %as{$as},
 	--> Seq:D
@@ -537,6 +538,7 @@ method in(Path::Finder:D:
 				}
 			}
 		}
+		$result = !$result if $invert && $result !~~ Prune;
 
 		take $relative ?? IO::Path.new($item.relative($base), :CWD($base.absolute)) !! $item if $result;
 	}
@@ -666,6 +668,8 @@ control options. Valid options include:
 =item C<keep-going> - Whether or not the search should continue when an error is encountered (typically an unreadable directory). Defaults to C<True>.
 
 =item C<quiet> - Whether printing non-fatal errors to C<$*ERR> is repressed. Defaults to C<False>.
+
+=item C<invert> - This will invert which files are matched and which files are not
 
 =item C<as> - The type of values that will be returned. Valid values are C<IO::Path> (the default) and C<Str>.
 

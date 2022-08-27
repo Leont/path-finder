@@ -1,6 +1,7 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+    - Add an $invert named argument to in/find
 
 0.4.2  2022-08-19T13:12:52+02:00
     - Add device-type method
