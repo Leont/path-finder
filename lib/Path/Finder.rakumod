@@ -2,10 +2,9 @@ use v6;
 
 unit class Path::Finder:ver<0.4.3> does Callable;
 
-has Callable:D @!rules;
+has Callable:D @!rules is built;
 our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
 
-submethod BUILD(:@!rules) { }
 method !rules() {
 	return @!rules;
 }
