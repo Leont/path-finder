@@ -553,9 +553,9 @@ method CALL-ME(|capture) {
 
 our sub finder(Path::Finder :$base = Path::Finder, *%options --> Path::Finder) is export(:find) {
 	class Entry {
-		has $.name;
-		has $.method handles <precedence>;
-		has $.capture;
+		has Str $.name;
+		has Method $.method handles <precedence>;
+		has Capture $.capture;
 		method call-with($object) {
 			return $object.$!method(|$!capture);
 		}
