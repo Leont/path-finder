@@ -36,7 +36,7 @@ multi method and(Path::Finder:U: *@also) {
 }
 proto method none(|) is constraint(None) { * }
 multi method none(Path::Finder:U: *@no) {
-	return self.or(|@no).not;
+	return self.or(@no).not;
 }
 multi method none(Path::Finder:D: Callable $rule) {
 	return self.and: sub ($item, *%options) { return negate($rule($item, |%options)) };
@@ -60,11 +60,11 @@ my multi unrulify(Callable $rule) {
 my multi unrulify(Path::Finder $iterator) {
 	return $iterator;
 }
-proto method or(*@) is constraint(Or) { * }
+proto method or(|) is constraint(Or) { * }
 multi method or(Path::Finder:U: $rule) {
 	return unrulify($rule);
 }
-multi method or(Path::Finder:U: *@also)  {
+multi method or(Path::Finder:U: @also) {
 	my @iterators = |@also.map(&unrulify);
 	my @rules = sub ($item, *%opts) {
 		my $ret = False;
@@ -84,6 +84,9 @@ multi method or(Path::Finder:U: *@also)  {
 		return $ret;
 	}
 	return self.bless(:@rules);
+}
+multi method or(Path::Finder:U: *@also)  {
+	self.or(@also);
 }
 method skip(*@garbage) is constraint(Skip) {
 	my @iterators = |@garbage.map(&unrulify);
@@ -549,7 +552,7 @@ method CALL-ME(|capture) {
 	return self.in(|capture);
 }
 
-our sub finder(Path::Finder :$base = Path::Finder.new, *%options --> Path::Finder) is export(:find) {
+our sub finder(Path::Finder :$base = Path::Finder, *%options --> Path::Finder) is export(:find) {
 	class Entry {
 		has $.name;
 		has $.method handles <precedence>;
@@ -568,7 +571,7 @@ our sub finder(Path::Finder :$base = Path::Finder.new, *%options --> Path::Finde
 				\($value);
 			}
 			when Inf {
-				\($value ~~ Hash|Pair ?? finder(|%($value)) !! $value );
+				\(@($value).map({ $^item ~~ Hash|Pair ?? finder(|%($item)) !! $item }));
 			}
 			default {
 				die "Finder key $name doesn't have a usable signature";
