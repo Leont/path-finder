@@ -542,6 +542,8 @@ method in(Path::Finder:D:
 						.message.note unless $quiet;
 					}
 				}
+			} elsif $depth == 0 && !$quiet && !$item.e {
+				note "'$item' doesn't exist";
 			}
 		}
 		$result = !$result if $invert && $result !~~ Prune;
