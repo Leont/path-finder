@@ -281,40 +281,44 @@ method dangling(Bool $value = True) is constraint(Stat) {
 }
 
 method readable(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.r === $value };
+	self.and: sub ($item, *%) { $item.r.so === $value };
 }
 method writable(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.w === $value };
+	self.and: sub ($item, *%) { $item.w.so === $value };
 }
 method executable(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.x === $value };
+	self.and: sub ($item, *%) { $item.x.so === $value };
 }
 method read-writable(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.rw === $value };
+	self.and: sub ($item, *%) { $item.rw.so === $value };
 }
 method read-write-executable(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.rwx === $value };
+	self.and: sub ($item, *%) { $item.rwx.so === $value };
 }
 method exists(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.e === $value };
+	self.and: sub ($item, *%) { $item.e.so === $value };
 }
 method file(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.f === $value };
+	self.and: sub ($item, *%) { $item.f.so === $value };
 }
 method directory(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.d === $value };
+	self.and: sub ($item, *%) { $item.d.so === $value };
 }
 method symlink(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.l === $value }
+	self.and: sub ($item, *%) { $item.l.so === $value }
 }
 method empty(Bool $value = True) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.z === $value };
+	self.and: sub ($item, *%) { $item.z.so === $value };
+}
+
+sub match(Any $left, Mu $right) {
+	$left.defined ?? $left ~~ $right !! False;
 }
 
 my sub stat-check($field, $matcher) {
 	return sub ($item, *%) {
 		use nqp;
-		return nqp::stat(nqp::unbox_s($item.absolute), $field) ~~ $matcher;
+		return match(nqp::stat(nqp::unbox_s($item.absolute), $field), $matcher);
 	}
 }
 
@@ -347,20 +351,20 @@ method device-type(Mu $devtype) is constraint(Stat) {
 }
 
 method accessed(Mu $accessed) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.accessed ~~ $accessed };
+	self.and: sub ($item, *%) { match($item.accessed, $accessed) };
 }
 method changed(Mu $changed) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.changed ~~ $changed };
+	self.and: sub ($item, *%) { match($item.changed, $changed) };
 }
 method modified(Mu $modified) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.modified ~~ $modified };
+	self.and: sub ($item, *%) { match($item.modified, $modified) };
 }
 
 method mode(Mu $mode) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.mode ~~ $mode };
+	self.and: sub ($item, *%) { match($item.mode, $mode) };
 }
 method size(Mu $size) is constraint(Stat) {
-	self.and: sub ($item, *%) { $item.s ~~ $size };
+	self.and: sub ($item, *%) { match($item.s, $size) };
 }
 
 proto method depth($) is constraint(Depth) { * }

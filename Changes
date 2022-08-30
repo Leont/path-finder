@@ -2,6 +2,7 @@ Revision history for Path-Finder
 
 {{$NEXT}}
     - Allow for multiple arguments to logical operators in find/finder
+    - Gracefully deal with checking non-existent files
 
 0.4.3  2022-08-27T17:39:40+02:00
     - Add an $invert named argument to in/find
