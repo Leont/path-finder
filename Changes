@@ -1,6 +1,8 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+
+0.4.5  2022-09-18T15:50:31+02:00
     - Improve semantics of or and none wrt pruning
 
 0.4.4  2022-08-30T22:25:29+02:00
