@@ -33,13 +33,6 @@ multi method and(Path::Finder:D $self: *@also) {
 multi method and(Path::Finder:U: *@also) {
 	return self.bless(:rules(flat @also.map(&rulify)));
 }
-proto method none(|) is constraint(None) { * }
-multi method none(Path::Finder:U: *@no) {
-	return self.or(@no).not;
-}
-multi method none(Path::Finder:D: Callable $rule) {
-	return self.and: sub ($item, *%options) { return negate($rule($item, |%options)) };
-}
 
 my multi negate(Bool() $value) {
 	return !$value;
@@ -47,6 +40,39 @@ my multi negate(Bool() $value) {
 my multi negate(Prune $value) {
 	return Prune(+!$value)
 }
+
+proto method none(|) is constraint(Or) { * }
+multi method none(Path::Finder:U: $rule) {
+	return unrulify($rule);
+}
+multi method none(Path::Finder:U: @also) {
+	my @iterators = |@also.map(&unrulify);
+	my @rules = sub ($item, *%opts) {
+		my $ret = Bool;
+		for @iterators -> $iterator {
+			given $iterator!test($item, |%opts) {
+				when * === True {
+					return False;
+				}
+				when * === False {
+					$ret = True if $ret === Bool;
+				}
+				when PruneExclusive {
+					$ret = PruneInclusive;
+				}
+				when PruneInclusive {
+					$ret = PruneExclusive if $ret === any(Bool, False);
+				}
+			}
+		}
+		return $ret // True;
+	}
+	return self.bless(:@rules);
+}
+multi method none(Path::Finder:U: *@also)  {
+	self.none(@also);
+}
+
 method not() {
 	my $obj = self;
 	return self.bless(:rules[sub ($item, *%opts) {
@@ -66,21 +92,26 @@ multi method or(Path::Finder:U: $rule) {
 multi method or(Path::Finder:U: @also) {
 	my @iterators = |@also.map(&unrulify);
 	my @rules = sub ($item, *%opts) {
-		my $ret = False;
+		my $ret = Bool;
 		for @iterators -> $iterator {
 			given $iterator!test($item, |%opts) {
-				when PruneExclusive {
-					return PruneExclusive;
-				}
 				when * === True {
+					return True;
+				}
+				when * === False {
+					return True if $ret === PruneExclusive;
 					$ret = $_;
 				}
+				when PruneExclusive {
+					return True if $ret === False;
+					$ret = $_ if $ret === any(Bool, PruneInclusive);
+				}
 				when PruneInclusive {
-					$ret = $_ if $ret === False;
+					$ret = $_ if $ret === Bool;
 				}
 			}
 		}
-		return $ret;
+		return $ret // False;
 	}
 	return self.bless(:@rules);
 }

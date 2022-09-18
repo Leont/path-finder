@@ -76,10 +76,8 @@ my $td = make-tree(@tree);
 }
 
 {
-	my $rule = Path::Finder.and(
-		Path::Finder.none(
-			Path::Finder.name("lldskfkad"), sub ($item, *%) { return PruneExclusive if $item ~~ /eeee$/ }
-		)
+	my $rule = Path::Finder.none(
+		Path::Finder.name("lldskfkad"), sub ($item, *%) { return PruneExclusive if $item ~~ /eeee$/ }
 	);
 	my @expected = <
 		  .
@@ -98,7 +96,7 @@ my $td = make-tree(@tree);
 		Path::Finder.or( sub ($item, *%) { return PruneExclusive if $item ~~ /eeee/ }, sub ($item, *%) { return True }, ),
 		Path::Finder.and( sub ($item, *%){ $item ~~ /eeee/ } ),
 	);
-	my @expected = < cccc/eeee >;
+	my @expected = < cccc/eeee cccc/eeee/ffff.txt >;
 	my @got = $rule.in($td).map: { unixify( $_, $td ) };
 	is-deeply( @got, @expected, "nested and + or with prunning" );
 }
