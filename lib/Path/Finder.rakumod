@@ -31,7 +31,7 @@ multi method and(Path::Finder:D $self: *@also) {
 	return self.bless(:rules(flat @!rules, @also.map(&rulify)));
 }
 multi method and(Path::Finder:U: *@also) {
-	return self.bless(:rules(flat @also.map(&rulify)));
+	return self.bless(:rules(@also.flatmap(&rulify)));
 }
 
 my multi negate(Bool() $value) {
@@ -46,7 +46,7 @@ multi method none(Path::Finder:U: $rule) {
 	return unrulify($rule);
 }
 multi method none(Path::Finder:U: @also) {
-	my @iterators = |@also.map(&unrulify);
+	my @iterators = @also.flatmap(&unrulify);
 	my @rules = sub ($item, *%opts) {
 		my $ret = Bool;
 		for @iterators -> $iterator {
@@ -192,7 +192,7 @@ my grammar Globbing {
 	token term:character-class {
 		'[' ~ ']' [ $<not>=["!"?] <class>+ ]
 		{
-			my @class = @<class>.map(*.made).flat;
+			my @class = @<class>.flatmap(*.made);
 			make ~$<not> ?? /<!before @class> ./ !! /@class/;
 		}
 	}
@@ -620,7 +620,7 @@ our sub finder(Path::Finder :$base = Path::Finder, *%options --> Path::Finder) i
 }
 
 our sub find(*@dirs, *%options --> Seq:D) is export(:DEFAULT :find) {
-	state @in-arguments = flat Path::Finder.^lookup('in').signature.params.map(*.named_names);
+	state @in-arguments = Path::Finder.^lookup('in').signature.params.flatmap(*.named_names);
 	my %in-options = %options{@in-arguments}:delete:p;
 	return finder(|%options).in(|@dirs, |%in-options);
 }
