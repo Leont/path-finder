@@ -527,7 +527,9 @@ method in(Path::Finder:D:
 	:&map = %as{$as},
 	--> Seq:D
 ) {
-	my @queue = @dirs.map(*.IO).map: { ($^path, 0, $^path, Bool) };
+	my $SPEC = $*SPEC;
+	my $CWD = $*CWD;
+	my @queue = @dirs.map({ IO::Path.new($^path, :$SPEC, :$CWD) }).map: { ($^path, 0, $^path, Bool) };
 
 	my Bool %seen;
 	sub is-unique (IO::Path $item) {
@@ -579,7 +581,7 @@ method in(Path::Finder:D:
 		}
 		$result = !$result if $invert && $result !~~ Prune;
 
-		take $relative ?? IO::Path.new($item.relative($base), :CWD($base.absolute)) !! $item if $result;
+		take $relative ?? IO::Path.new($item.relative($base), :CWD($base.absolute), :$SPEC) !! $item if $result;
 	}
 	return &map ?? $seq.map(&map) !! $seq;
 }
