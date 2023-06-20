@@ -592,10 +592,9 @@ method CALL-ME(|capture) {
 
 our sub finder(Path::Finder :$base = Path::Finder, *%options --> Path::Finder) is export(:find) {
 	class Entry {
-		has Str $.name;
 		has Method $.method handles <precedence>;
 		has Capture $.capture;
-		method call-with($object) {
+		method CALL-ME($object) {
 			return $object.$!method(|$!capture);
 		}
 	};
@@ -615,10 +614,10 @@ our sub finder(Path::Finder :$base = Path::Finder, *%options --> Path::Finder) i
 				die "Finder key $name doesn't have a usable signature";
 			}
 		}
-		@entries.push: Entry.new(:$name, :$method, :$capture);
+		@entries.push: Entry.new(:$method, :$capture);
 	}
 	my @keys = @entries.sort(*.precedence);
-	return ($base, |@keys).reduce: { $^entry.call-with($^base) }
+	return ($base, |@keys).reduce: { $^entry($^base) }
 }
 
 our sub find(*@dirs, *%options --> Seq:D) is export(:DEFAULT :find) {
