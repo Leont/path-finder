@@ -742,7 +742,7 @@ or another C<Path::Finder> object.
 =head3 C<and>
 
  $finder.and($finder2) ;
- $finder.and(-> $item, *%) { $item ~~ :rwx });
+ $finder.and(-> $item, *% { $item ~~ :rwx });
  $finder.and(@more-rules);
  
  find(:and(@more-rules));
@@ -851,7 +851,7 @@ useful for combining filetype tests.
 
 =head3 C<ext>
 
-The C<name> method takes a pattern and creates a rule that is true
+The C<ext> method takes a pattern and creates a rule that is true
 if it matches the extension of path. Patterns may be anything that can
 smartmatch a string.
 
