@@ -1,6 +1,7 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+    - Move to fez
 
 0.4.5  2022-09-18T15:50:31+02:00
     - Improve semantics of or and none wrt pruning
