@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Leont/path-finder.svg?branch=master)](https://travis-ci.org/Leont/path-finder)
+[![Actions Status](https://github.com/Leont/path-finder/workflows/test/badge.svg)](https://github.com/Leont/path-finder/actions)
 
 SYNOPSIS
 ========
@@ -98,7 +98,7 @@ Logic operations
 ### `and`
 
     $finder.and($finder2) ;
-    $finder.and(-> $item, *%) { $item ~~ :rwx });
+    $finder.and(-> $item, *% { $item ~~ :rwx });
     $finder.and(@more-rules);
 
     find(:and(@more-rules));
@@ -183,7 +183,7 @@ The `io` method takes a pattern and creates a rule that is true if it matches th
 
 ### `ext`
 
-The `name` method takes a pattern and creates a rule that is true if it matches the extension of path. Patterns may be anything that can smartmatch a string.
+The `ext` method takes a pattern and creates a rule that is true if it matches the extension of path. Patterns may be anything that can smartmatch a string.
 
 ### `skip-dir`
 

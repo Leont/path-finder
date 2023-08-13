@@ -1,6 +1,8 @@
 Revision history for Path-Finder
 
 {{$NEXT}}
+
+0.4.6  2023-08-13T13:18:07+02:00
     - Move to fez
 
 0.4.5  2022-09-18T15:50:31+02:00
