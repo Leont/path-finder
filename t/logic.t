@@ -1,6 +1,5 @@
 use v6;
 use Test;
-use File::Temp;
 
 use lib 't/lib';
 use PFTest;
