@@ -1,6 +1,6 @@
 use v6;
 
-unit class Path::Finder:ver<0.4.6>:auth<zef:leont> does Callable;
+unit class Path::Finder:ver<0.4.7>:auth<zef:leont> does Callable;
 
 has Callable:D @!rules is built;
 our enum Prune is export(:prune) <PruneInclusive PruneExclusive>;
